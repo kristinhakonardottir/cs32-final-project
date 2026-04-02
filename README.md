@@ -6,4 +6,4 @@ Each semester I manually write in my notes app the date of each day of the whole
 
 Therefore, for my final project, I want to build a script that I can run at the beginning of a semester (or another time period) that gives me the date for each day of the semester with assignments under the date of their respective due dates as output, with other information. I would input the courses I'm taking that semester, the assignments for each class, their due dates in Icelandic and weight on the final grade. Then, I would convert that information into a file and flatten the dates so the whole plan of the semester is one column that I can either convert to a note in my notes app through my terminal or a text file that has the right formatting that I can copy and paste into my notes app.
 
-
+If this project is too broad for the scope of this class, I can simplify it, but if it is 
