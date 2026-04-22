@@ -1,35 +1,31 @@
 import google.generativeai as genai
 import json
-import os
 
-# You can get a free API key at https://aistudio.google.com/
-# For now, we will assume it's stored in an environment variable or a string
 API_KEY = "AIzaSyABC9koWOBHi00"
 genai.configure(api_key=API_KEY)
 
-def extract_weights(syllabus_text):
-    """
-    Uses a Gemini Transformer model to extract grading weights.
-    """
+def extract_and_save_weights(syllabus_path):
+    with open(syllabus_path, 'r') as f:
+        syllabus_text = f.read()
+
     model = genai.GenerativeModel('gemini-1.5-flash')
-
     prompt = f"""
-    You are a specialized academic data extractor.
-    Analyze this syllabus text and extract the grading categories and their weights.
-    Return ONLY a raw JSON object where keys are the category names and
-    values are decimals (e.g., 0.25 for 25%).
-
-    SYLLABUS TEXT:
-    {syllabus_text}
+    Analyze this syllabus and extract grading categories and weights.
+    Return ONLY a JSON object. Example: {{"Problem Sets": 0.50, "Final Project": 0.30}}
+    Text: {syllabus_text}
     """
 
     response = model.generate_content(prompt)
-
-    # Clean the response text (remove markdown backticks if present)
     clean_json = response.text.strip().replace('```json', '').replace('```', '')
 
     try:
-        return json.loads(clean_json)
+        weights = json.loads(clean_json)
+        # Save to a file for the other script to use
+        with open('weights.json', 'w') as f:
+            json.dump(weights, f, indent=4)
+        print("✅ Weights extracted and saved to weights.json")
     except Exception as e:
-        print(f"Error parsing AI response: {e}")
-        return {}
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    extract_and_save_weights('syllabus.txt')
