@@ -26,35 +26,41 @@ def main():
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
 
-    events = raw_text.split("BEGIN:VEVENT")
-    all_assignments = []
+    # Define the cutoff date: January 1, 2026
+    start_filter = date(2026, 1, 1)
 
-    # 1. First Pass: Extract data and find categories
-    course_data = {} # Format: { 'CS 32': { 'Pset': [list of assignments], 'Quiz': [] } }
+    events = raw_text.split("BEGIN:VEVENT")
+    course_data = {}
+
+    print(f"📅 Filtering for assignments starting from {start_filter}...")
 
     for event in events:
         if "SUMMARY:" in event and "DTSTART" in event:
-            summary_line = event.split("SUMMARY:")[1].split("\n")[0].strip()
-
-            # Extract Course and Assignment Name
-            course = "Almennt"
-            assignment_name = summary_line
-            if "[" in summary_line:
-                parts = summary_line.rsplit("[", 1)
-                assignment_name = parts[0].strip()
-                course = parts[1].replace("]", "").strip()
-
-            # Date Extraction
+            # 1. Date Extraction and Filtering
             date_raw = event.split("DTSTART")[1].split(":")[1][:8]
             try:
                 y, m, d = int(date_raw[0:4]), int(date_raw[4:6]), int(date_raw[6:8])
-                is_date = get_icelandic_date(date(y, m, d))
+                py_date = date(y, m, d)
 
-                # Group by Course and "Keyword"
+                # SKIP assignments before January 1
+                if py_date < start_filter:
+                    continue
+
+                is_date = get_icelandic_date(py_date)
+
+                # 2. Extract Course and Assignment Name
+                summary_line = event.split("SUMMARY:")[1].split("\n")[0].strip()
+                course = "Almennt"
+                assignment_name = summary_line
+                if "[" in summary_line:
+                    parts = summary_line.rsplit("[", 1)
+                    assignment_name = parts[0].strip()
+                    course = parts[1].replace("]", "").strip()
+
+                # 3. Categorize
                 if course not in course_data:
                     course_data[course] = {}
 
-                # Determine category (Pset, Hw, Quiz, etc.)
                 category = "Other"
                 for word in ["Pset", "Hw", "Homework", "Quiz", "Exam", "FP", "Final"]:
                     if word.lower() in assignment_name.lower():
@@ -71,7 +77,7 @@ def main():
             except:
                 continue
 
-    # 2. Second Pass: Interactive Weighting
+    # 4. Interactive Weighting
     final_output = []
     print("\n--- ⚖️ WEIGHTING CONFIGURATION ---")
 
@@ -81,11 +87,11 @@ def main():
             count = len(items)
             print(f"   Found {count} assignments for category: '{cat_name}'")
 
-            # Prompt the user
             try:
-                total_pct = float(input(f"   What is the TOTAL percentage grade for {cat_name}s? (e.g., 20 for 20%): "))
+                prompt = f"   What is the TOTAL percentage for {cat_name}s? (e.g., 20): "
+                total_pct = float(input(prompt))
                 individual_weight = (total_pct / 100) / count
-            except ValueError:
+            except (ValueError, ZeroDivisionError):
                 individual_weight = 0.0
 
             for item in items:
@@ -96,13 +102,13 @@ def main():
                     "Vægi": round(individual_weight, 4)
                 })
 
-    # 3. Export to CSV
+    # 5. Export to CSV
     with open('namsaaetlun.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.DictWriter(f, fieldnames=["Dagsetning", "Áfangi", "Verkefni", "Vægi"])
         writer.writeheader()
         writer.writerows(final_output)
 
-    print(f"\n✅ Success! CSV generated with {len(final_assignments)} weighted assignments.")
+    print(f"\n✅ Success! CSV generated with {len(final_output)} weighted assignments.")
 
 if __name__ == "__main__":
     main()
