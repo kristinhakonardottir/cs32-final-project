@@ -21,94 +21,92 @@ def get_icelandic_date(dt):
     return f"{day_name} {dt.day}. {month_name}"
 
 def main():
+    # 1. FETCH DATA
     print("🛰️ Connecting to Canvas...")
     req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
 
-    # Define the cutoff date: January 1, 2026
-    start_filter = date(2026, 1, 1)
-
     events = raw_text.split("BEGIN:VEVENT")
-    course_data = {}
 
-    print(f"📅 Filtering for assignments starting from {start_filter}...")
+    # We will organize assignments by course name in a dictionary
+    # Structure: { "CS 32": [list of assignment dictionaries], ... }
+    course_catalog = {}
 
+    # 2. PARSE DATA
     for event in events:
         if "SUMMARY:" in event and "DTSTART" in event:
-            # 1. Date Extraction and Filtering
+            summary_line = event.split("SUMMARY:")[1].split("\n")[0].strip()
+
+            course = "Almennt"
+            assignment = summary_line
+            if "[" in summary_line:
+                parts = summary_line.rsplit("[", 1)
+                assignment = parts[0].strip()
+                course = parts[1].replace("]", "").strip()
+
             date_raw = event.split("DTSTART")[1].split(":")[1][:8]
             try:
                 y, m, d = int(date_raw[0:4]), int(date_raw[4:6]), int(date_raw[6:8])
                 py_date = date(y, m, d)
 
-                # SKIP assignments before January 1
-                if py_date < start_filter:
+                # Filtering to ensure we only see 2026 assignments
+                if y != 2026:
                     continue
 
-                is_date = get_icelandic_date(py_date)
+                if course not in course_catalog:
+                    course_catalog[course] = []
 
-                # 2. Extract Course and Assignment Name
-                summary_line = event.split("SUMMARY:")[1].split("\n")[0].strip()
-                course = "Almennt"
-                assignment_name = summary_line
-                if "[" in summary_line:
-                    parts = summary_line.rsplit("[", 1)
-                    assignment_name = parts[0].strip()
-                    course = parts[1].replace("]", "").strip()
-
-                # 3. Categorize
-                if course not in course_data:
-                    course_data[course] = {}
-
-                category = "Other"
-                for word in ["Pset", "Hw", "Homework", "Quiz", "Exam", "FP", "Final"]:
-                    if word.lower() in assignment_name.lower():
-                        category = word
-                        break
-
-                if category not in course_data[course]:
-                    course_data[course][category] = []
-
-                course_data[course][category].append({
-                    "Date": is_date,
-                    "Name": assignment_name
+                course_catalog[course].append({
+                    "date_obj": py_date,
+                    "is_date": get_icelandic_date(py_date),
+                    "name": assignment
                 })
             except:
                 continue
 
-    # 4. Interactive Weighting
-    final_output = []
-    print("\n--- ⚖️ WEIGHTING CONFIGURATION ---")
+    # 3. INTERACTIVE WEIGHTING
+    final_data = []
+    print("\n--- ⚖️ INTERACTIVE WEIGHTING ---")
 
-    for course, categories in course_data.items():
-        print(f"\n📚 COURSE: {course}")
-        for cat_name, items in categories.items():
-            count = len(items)
-            print(f"   Found {count} assignments for category: '{cat_name}'")
+    # Sort courses alphabetically for the user
+    for course_name in sorted(course_catalog.keys()):
+        assignments = course_catalog[course_name]
+        # Sort assignments by date so it's easier for the user to read
+        assignments.sort(key=lambda x: x["date_obj"])
+
+        print(f"\n📚 COURSE: {course_name}")
+        print(f"Found {len(assignments)} assignments:")
+
+        for item in assignments:
+            print(f"   - {item['is_date']}: {item['name']}")
+
+        # Now ask for weights
+        for item in assignments:
+            prompt = f"   → Enter weight for '{item['name']}' (e.g. 0.05 for 5%): "
+            weight_input = input(prompt)
 
             try:
-                prompt = f"   What is the TOTAL percentage for {cat_name}s? (e.g., 20): "
-                total_pct = float(input(prompt))
-                individual_weight = (total_pct / 100) / count
-            except (ValueError, ZeroDivisionError):
-                individual_weight = 0.0
+                weight = float(weight_input)
+            except ValueError:
+                weight = 0.0 # Default if they just hit enter
 
-            for item in items:
-                final_output.append({
-                    "Dagsetning": item["Date"],
-                    "Áfangi": course,
-                    "Verkefni": item["Name"],
-                    "Vægi": round(individual_weight, 4)
-                })
+            final_data.append({
+                "Dagsetning": item["is_date"],
+                "Áfangi": course_name,
+                "Verkefni": item["name"],
+                "Vægi": weight
+            })
 
-    # 5. Export to CSV
-    with open('namsaaetlun.csv', 'w', newline='', encoding='utf-8-sig') as f:
-        writer = csv.DictWriter(f, fieldnames=["Dagsetning", "Áfangi", "Verkefni", "Vægi"])
+    # 4. EXPORT TO CSV
+    output_file = "namsaaetlun.csv"
+    with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
+        fieldnames = ["Dagsetning", "Áfangi", "Verkefni", "Vægi"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(final_output)
+        writer.writerows(final_data)
 
-    print(f"\n✅ Success! CSV generated with {len(final_output)} weighted assignments.")
+    print(f"\n✅ All set! Your weighted planner is saved to {output_file}")
 
 if __name__ == "__main__":
     main()
