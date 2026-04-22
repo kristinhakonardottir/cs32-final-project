@@ -1,7 +1,7 @@
 import google.generativeai as genai
 import json
 
-API_KEY = "AIzaSyABC9koWOBHi00"
+API_KEY = "AIzaSyABC9koWOBHi00-aFW5rAbmp7snwnG6rFs"
 genai.configure(api_key=API_KEY)
 
 def extract_and_save_weights(syllabus_path):
