@@ -4,7 +4,7 @@ import os
 
 # You can get a free API key at https://aistudio.google.com/
 # For now, we will assume it's stored in an environment variable or a string
-API_KEY = "YOUR_API_KEY_HERE"
+API_KEY = "AIzaSyABC9koWOBHi00"
 genai.configure(api_key=API_KEY)
 
 def extract_weights(syllabus_text):
