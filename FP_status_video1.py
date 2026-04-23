@@ -77,7 +77,7 @@ def main():
     format_choice = input("Export format? (csv/txt): ").lower()
 
     # getting data
-    print(f"\n Fetching Canvas data...")
+    print(f"\nFetching Canvas data...")
     req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
