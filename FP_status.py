@@ -41,7 +41,6 @@ def get_grouped_assignments(raw_text, lang_choice):
 
             try:
                 y, m, d = int(date_raw[0:4]), int(date_raw[4:6]), int(date_raw[6:8])
-                # We filter for 2026 to stay within the project scope
                 if y != 2026: continue
 
                 py_date = date(y, m, d)
@@ -74,7 +73,7 @@ def main():
 
     print("\n--- Date Range ---")
     while True:
-        date_input = input("Enter start date (YYYY-MM-DD) or press Enter for 2026-01-26: ")
+        date_input = input("Enter start date (YYYY-MM-DD): ")
         if date_input == "":
             start_date = date(2026, 1, 1)
             break
