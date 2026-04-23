@@ -18,7 +18,6 @@ This project is a Python-based tool that connects a iCalendar feed, parses acade
 2. **Setup**:
    - Save the script as `planner.py`.
    - Paste the iCalendar feed into the URL variable
-   - Ensure you are connected to the internet to fetch the live Canvas feed.
 3. **Execution**:
    - Open your terminal or IDE (like VS Code).
    - Run the command: `python planner.py`
