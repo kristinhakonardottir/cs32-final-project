@@ -63,7 +63,6 @@ def main():
     # 1. User preferences
     print("--- Configuration ---")
     lang_choice = input("Select language (is/es/fr): ").lower()
-    if lang_choice not in LANG_DATA: lang_choice = "is"
 
     print("\n--- Layout Options ---")
     print("1: Standard (Date and Task on same row)")
