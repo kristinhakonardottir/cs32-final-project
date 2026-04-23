@@ -106,13 +106,16 @@ def main():
                         writer.writerow([task]) # Assignment Rows
                     writer.writerow([])         # Blank spacing row
 
-            else: # TXT format (The "No Column" / "No |" version)
+            else: # TXT format
                 if layout_choice == "1":
-                    # Date followed by assignments with simple spacing
-                    tasks_text = "    ".join(tasks) if tasks else ""
-                    f.write(f"{date_str}    {tasks_text}\n")
+                    # \t acts as a "Move to next column" command
+                    # We join the tasks with tabs so each gets its own 'column'
+                    tasks_text = "\t".join(tasks) if tasks else ""
+
+                    # We put a tab after the date_str to start the first assignment column
+                    f.write(f"{date_str}\t{tasks_text}\n")
                 else:
-                    # Vertical list
+                    # Vertical list (unchanged)
                     f.write(f"{date_str}\n")
                     for t in tasks:
                         f.write(f"  {t}\n")
