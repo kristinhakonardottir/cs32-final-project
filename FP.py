@@ -106,14 +106,16 @@ def main():
                         writer.writerow([task]) # Assignment Rows
                     writer.writerow([])         # Blank spacing row
 
-            else: # TXT format
+            else: # TXT format (The "No Column" / "No |" version)
                 if layout_choice == "1":
-                    # Horizontal with spaces instead of |
-                    task_str = "    ".join(tasks) if tasks else ""
-                    f.write(f"{date_str}    {task_str}\n")
+                    # Date followed by assignments with simple spacing
+                    tasks_text = "    ".join(tasks) if tasks else ""
+                    f.write(f"{date_str}    {tasks_text}\n")
                 else:
+                    # Vertical list
                     f.write(f"{date_str}\n")
-                    for t in tasks: f.write(f"  {t}\n")
+                    for t in tasks:
+                        f.write(f"  {t}\n")
                     f.write("\n")
 
             current_day += timedelta(days=1)
