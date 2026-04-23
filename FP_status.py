@@ -78,8 +78,8 @@ def main():
 
     assignments = get_grouped_assignments(raw_text, lang_choice)
 
-    # 3. Timeline Bounds (Jan 1 to last assignment, change )
-    start_date = date(2026, 1, 1)
+    # 3. Timeline Bounds (Jan 26 to last assignment, can change depending on when you want it to start)
+    start_date = date(2026, 1, 26)
     end_date = max(assignments.keys()) if assignments else date(2026, 5, 31)
 
     filename = f"planner_{lang_choice}.{format_choice}"
