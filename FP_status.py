@@ -72,17 +72,11 @@ def main():
     format_choice = input("\nExport format? (csv/txt): ").lower()
 
     print("\n--- Date Range ---")
-    while True:
-        date_input = input("Enter start date (YYYY-MM-DD): ")
-        if date_input == "":
-            start_date = date(2026, 1, 1)
-            break
-        try:
-            y, m, d = map(int, date_input.split("-"))
-            start_date = date(y, m, d)
-            break
-        except ValueError:
-            print("Invalid format. Please use YYYY-MM-DD (e.g., 2026-04-01)")
+    date_input = input("Enter start date (YYYY-MM-DD): ")
+
+    # Split the string and convert each part to an integer
+    y, m, d = map(int, date_input.split("-"))
+    start_date = date(y, m, d)
 
     # 2. Getting data
     print(f"\nFetching calendar data...")
