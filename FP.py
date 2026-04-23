@@ -108,9 +108,11 @@ def main():
 
             else: # TXT format
                 if layout_choice == "1":
-                    task_str = ", ".join(tasks) if tasks else ""
+                    # Date followed by tasks separated by |
+                    task_str = " | ".join(tasks) if tasks else ""
                     f.write(f"{date_str} | {task_str}\n")
                 else:
+                    # Clean vertical list with no extra lines/dashes
                     f.write(f"{date_str}\n")
                     for task in tasks:
                         f.write(f"{task}\n")

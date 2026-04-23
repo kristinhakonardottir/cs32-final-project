@@ -81,48 +81,48 @@ laugardagur 21. mars |
 sunnudagur 22. mars | 
 mánudagur 23. mars | COMPSCI 32: Hw #10: Find colliding words
 þriðjudagur 24. mars | 
-miðvikudagur 25. mars | PSY 1900: Exam 2, COMPSCI 32: FP Dreams, COMPSCI 32: Quiz #5
+miðvikudagur 25. mars | PSY 1900: Exam 2 | COMPSCI 32: FP Dreams | COMPSCI 32: Quiz #5
 fimmtudagur 26. mars | 
 föstudagur 27. mars | MCB 128: b3_homework
 laugardagur 28. mars | 
 sunnudagur 29. mars | 
-mánudagur 30. mars | PSY 1900: Lecture, LIFESCI 1B: PIE 3: Lectures 12-15, COMPSCI 32: Hw #11: An informed search
+mánudagur 30. mars | PSY 1900: Lecture | LIFESCI 1B: PIE 3: Lectures 12-15 | COMPSCI 32: Hw #11: An informed search
 þriðjudagur 31. mars | ARC Pe: March Training Recording and Quiz - Group Tutoring Dynamics
-miðvikudagur 1. apríl | PSY 1900: Lecture, COMPSCI 32: FP Choice, COMPSCI 32: Hw #12: Classes in OO programming, COMPSCI 32: PSet #5: Check-In (steps 1-4)
+miðvikudagur 1. apríl | PSY 1900: Lecture | COMPSCI 32: FP Choice | COMPSCI 32: Hw #12: Classes in OO programming | COMPSCI 32: PSet #5: Check-In (steps 1-4)
 fimmtudagur 2. apríl | 
 föstudagur 3. apríl | MCB 128: quiz 4
 laugardagur 4. apríl | LIFESCI 1B: Problem Set (PSet) 6
 sunnudagur 5. apríl | PSY 1900: Homework 6
-mánudagur 6. apríl | PSY 1900: Lecture, COMPSCI 32: Quiz #6
+mánudagur 6. apríl | PSY 1900: Lecture | COMPSCI 32: Quiz #6
 þriðjudagur 7. apríl | 
-miðvikudagur 8. apríl | PSY 1900: Lecture, COMPSCI 32: FP Design, COMPSCI: Hw #13: Recursions\, Plotting in Python\, Tree Traversals
+miðvikudagur 8. apríl | PSY 1900: Lecture | COMPSCI 32: FP Design | COMPSCI: Hw #13: Recursions\, Plotting in Python\, Tree Traversals
 fimmtudagur 9. apríl | 
-föstudagur 10. apríl | MCB 128: b4_homework, COMPSCI 32: PSet #5: Final Turn-In
+föstudagur 10. apríl | MCB 128: b4_homework | COMPSCI 32: PSet #5: Final Turn-In
 laugardagur 11. apríl | 
 sunnudagur 12. apríl | PSY 1900: Homework 7
-mánudagur 13. apríl | PSY 1900: Lecture, COMPSCI 32: Hw #14: Playing with a RE
+mánudagur 13. apríl | PSY 1900: Lecture | COMPSCI 32: Hw #14: Playing with a RE
 þriðjudagur 14. apríl | 
-miðvikudagur 15. apríl | PSY 1900: Lecture, COMPSCI 32: Pset #6: Check-In (steps 1-3), COMPSCI 32: Hw #15: Examining bias in data
+miðvikudagur 15. apríl | PSY 1900: Lecture | COMPSCI 32: Pset #6: Check-In (steps 1-3) | COMPSCI 32: Hw #15: Examining bias in data
 fimmtudagur 16. apríl | 
-föstudagur 17. apríl | MCB 128: quiz 5, COMPSCI 32: Pset #6: Final Turn-In
+föstudagur 17. apríl | MCB 128: quiz 5 | COMPSCI 32: Pset #6: Final Turn-In
 laugardagur 18. apríl | LIFESCI 1B: Problem Set (PSet) 7
 sunnudagur 19. apríl | PSY 1900: Homework 8
-mánudagur 20. apríl | PSY 1900: Lecture, LIFESCI 1B: PIE 4: Lectures 17-22
+mánudagur 20. apríl | PSY 1900: Lecture | LIFESCI 1B: PIE 4: Lectures 17-22
 þriðjudagur 21. apríl | 
-miðvikudagur 22. apríl | PSY 1900: PSY1900 Meeting Link, COMPSCI 32: COMPSCI 32: Computational Thinking and Problem Solving, PSY 1900: Lecture, COMPSCI 32: Hw #16: Bug hunting with repl32.py
-fimmtudagur 23. apríl | PSY 1900: PSY1900 Meeting Link, COMPSCI 32: FP Status
-föstudagur 24. apríl | PSY 1900: PSY1900 Meeting Link, MCB 128: b5_homework
-laugardagur 25. apríl | LIFESCI 1B: Problem Set (Pset) 8, PSY 1900: PSY1900 Meeting Link
-sunnudagur 26. apríl | PSY 1900: PSY1900 Meeting Link, PSY 1900: Homework 9
-mánudagur 27. apríl | PSY 1900: PSY1900 Meeting Link, COMPSCI 32: COMPSCI 32: Computational Thinking and Problem Solving, PSY 1900: Lecture
-þriðjudagur 28. apríl | LIFESCI 1B: Lab Assignment 3 (Microbiome write-up), PSY 1900: PSY1900 Meeting Link
-miðvikudagur 29. apríl | PSY 1900: PSY1900 Meeting Link, COMPSCI 32: COMPSCI 32: Computational Thinking and Problem Solving, PSY 1900: Exam 3
+miðvikudagur 22. apríl | PSY 1900: PSY1900 Meeting Link | COMPSCI 32: COMPSCI 32: Computational Thinking and Problem Solving | PSY 1900: Lecture | COMPSCI 32: Hw #16: Bug hunting with repl32.py
+fimmtudagur 23. apríl | PSY 1900: PSY1900 Meeting Link | COMPSCI 32: FP Status
+föstudagur 24. apríl | PSY 1900: PSY1900 Meeting Link | MCB 128: b5_homework
+laugardagur 25. apríl | LIFESCI 1B: Problem Set (Pset) 8 | PSY 1900: PSY1900 Meeting Link
+sunnudagur 26. apríl | PSY 1900: PSY1900 Meeting Link | PSY 1900: Homework 9
+mánudagur 27. apríl | PSY 1900: PSY1900 Meeting Link | COMPSCI 32: COMPSCI 32: Computational Thinking and Problem Solving | PSY 1900: Lecture
+þriðjudagur 28. apríl | LIFESCI 1B: Lab Assignment 3 (Microbiome write-up) | PSY 1900: PSY1900 Meeting Link
+miðvikudagur 29. apríl | PSY 1900: PSY1900 Meeting Link | COMPSCI 32: COMPSCI 32: Computational Thinking and Problem Solving | PSY 1900: Exam 3
 fimmtudagur 30. apríl | PSY 1900: PSY1900 Meeting Link
 föstudagur 1. maí | PSY 1900: PSY1900 Meeting Link
 laugardagur 2. maí | PSY 1900: PSY1900 Meeting Link
 sunnudagur 3. maí | PSY 1900: PSY1900 Meeting Link
-mánudagur 4. maí | PSY 1900: PSY1900 Meeting Link, COMPSCI 32: FP Submission
-þriðjudagur 5. maí | PSY 1900: PSY1900 Meeting Link, NEURO 91: Final report (or thesis proposal)
+mánudagur 4. maí | PSY 1900: PSY1900 Meeting Link | COMPSCI 32: FP Submission
+þriðjudagur 5. maí | PSY 1900: PSY1900 Meeting Link | NEURO 91: Final report (or thesis proposal)
 miðvikudagur 6. maí | MCB 128: b6_homework
 fimmtudagur 7. maí | 
 föstudagur 8. maí | 
@@ -285,7 +285,7 @@ sunnudagur 11. október |
 mánudagur 12. október | 
 þriðjudagur 13. október | 
 miðvikudagur 14. október | 
-fimmtudagur 15. október | PSY 1813: Assignment 3 Part I, PSY 1813: Reading Response 10/15
+fimmtudagur 15. október | PSY 1813: Assignment 3 Part I | PSY 1813: Reading Response 10/15
 föstudagur 16. október | 
 laugardagur 17. október | 
 sunnudagur 18. október | 
@@ -318,7 +318,7 @@ föstudagur 13. nóvember |
 laugardagur 14. nóvember | 
 sunnudagur 15. nóvember | 
 mánudagur 16. nóvember | 
-þriðjudagur 17. nóvember | PSY 1813: Assignment 5 Part I, PSY 1813: Assignment 5 Part II
+þriðjudagur 17. nóvember | PSY 1813: Assignment 5 Part I | PSY 1813: Assignment 5 Part II
 miðvikudagur 18. nóvember | 
 fimmtudagur 19. nóvember | 
 föstudagur 20. nóvember | 
@@ -345,4 +345,4 @@ fimmtudagur 10. desember |
 föstudagur 11. desember | 
 laugardagur 12. desember | 
 sunnudagur 13. desember | 
-mánudagur 14. desember | HEB 1: Extra Credit Assignment: Analysis of HEB 55 sleep diary data, HEB 117: Final draft of individual research report
+mánudagur 14. desember | HEB 1: Extra Credit Assignment: Analysis of HEB 55 sleep diary data | HEB 117: Final draft of individual research report
