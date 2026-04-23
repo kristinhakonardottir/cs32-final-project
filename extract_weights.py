@@ -24,7 +24,7 @@ def extract_syllabus_data():
         return
 
     print(f"📤 Uploading {file_path} to Google AI...")
-    syllabus_upload = client.files.upload(path=file_path)
+    syllabus_upload = client.files.upload(file=file_path)
 
     # --- 3. THE SMART PROMPT ---
     prompt = """
