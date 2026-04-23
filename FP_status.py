@@ -43,14 +43,13 @@ def get_grouped_assignments(raw_text, lang_choice):
 
                 py_date = date(y, m, d)
 
-                course = "Almennt" if lang_choice == "is" else "General"
-                assignment = summary_line
                 if "[" in summary_line:
                     parts = summary_line.rsplit("[", 1)
                     assignment = parts[0].strip()
                     course = parts[1].replace("]", "").strip()
-
-                flipped_summary = f"{course}: {assignment}"
+                    flipped_summary = f"{course}: {assignment}"
+                else:
+                    flipped_summary = summary_line
 
                 if py_date not in grouped_data:
                     grouped_data[py_date] = []
