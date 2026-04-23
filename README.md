@@ -33,10 +33,10 @@ I used Gemini to assist me while I developed this project. It helped me with:
 - How to format the "spreadsheet" style and the "list" style
 - How to use the datetime library
 
-I wrote the logic of the "if" statements and functions myself, and then prompted Gemini with 
+I wrote the indexing of assignments and dates, the print statements, and the user inputs myself. For the "if/else" statements, functions and the main function, I wrote the logic myself, then I prompted Gemini asking how to translate it into an efficient python code.
 
-
-The code blocks it wrote for me are:
+The code blocks Gemini wrote for me and I copied are:
 - The LANG_DATA dictionary as it is more efficient for GAI to write such dictionary of dictionary with languages I don't speak (french and spanish)
--
+- The "getting data" from Canvas using the "urllib" library
+- 
 
