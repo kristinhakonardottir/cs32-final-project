@@ -78,7 +78,7 @@ def main():
 
     assignments = get_grouped_assignments(raw_text, lang_choice)
 
-    # 3. Timeline Bounds (Jan 1 to last assignment)
+    # 3. Timeline Bounds (Jan 1 to last assignment, change )
     start_date = date(2026, 1, 1)
     end_date = max(assignments.keys()) if assignments else date(2026, 5, 31)
 
