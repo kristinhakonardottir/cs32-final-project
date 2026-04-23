@@ -3,7 +3,7 @@ import urllib.request
 import csv
 from datetime import date
 
-# changed from just one dictionary for Icelandic to a dictionary (what language) of dictionaries (the translations)
+# changed from just one dictionary for Icelandic to a dictionary (what language) of dictionaries (the month and day translations)
 LANG_DATA = {
     "is": {
         "months": {1: "janúar", 2: "febrúar", 3: "mars", 4: "apríl", 5: "maí", 6: "júní", 7: "júlí", 8: "ágúst", 9: "september", 10: "október", 11: "nóvember", 12: "desember"},
@@ -21,6 +21,7 @@ LANG_DATA = {
 
 URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
 
+# added: 
 def format_date_by_lang(dt, lang_code):
     lang = LANG_DATA[lang_code]
     day_name = lang["days"][dt.strftime("%A")]
