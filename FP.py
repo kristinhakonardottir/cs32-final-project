@@ -2,7 +2,7 @@ import urllib.request
 import csv
 from datetime import date, timedelta
 
-# --- TRANSLATION MASTER DATABASE ---
+# Dictionaries (different languages is/es/fr) of dictionaries (the translations of the months and days)
 LANG_DATA = {
     "is": {
         "months": {1: "janúar", 2: "febrúar", 3: "mars", 4: "apríl", 5: "maí", 6: "júní", 7: "júlí", 8: "ágúst", 9: "september", 10: "október", 11: "nóvember", 12: "desember"},
