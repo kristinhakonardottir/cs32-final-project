@@ -51,8 +51,8 @@ def main():
 
     format_choice = input("\nExport format? (csv/txt): ").lower()
 
-    # 2. FETCH AND PARSE
-    print(f"\n🛰️ Fetching Canvas data...")
+    # fetch the data from the canvas .ics file
+    print(f"\n Fetching Canvas data...")
     req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
