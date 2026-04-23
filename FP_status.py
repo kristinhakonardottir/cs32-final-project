@@ -77,28 +77,37 @@ def main():
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         if format_choice == "csv":
             writer = csv.writer(f)
-            writer.writerow(headers)
+            # We don't necessarily need headers for a vertical grouped layout,
+            # but we can keep them or leave them out based on preference.
 
             for date_str, tasks in grouped_data.items():
                 if layout_choice == "1":
-                    # Standard: One row per task
+                    # Standard: Date and Task on the same row
                     for task in tasks:
                         writer.writerow([date_str, task])
                 else:
-                    # Grouped: Date row followed by task rows
-                    writer.writerow([f"--- {date_str} ---", ""])
-                    for task in tasks:
-                        writer.writerow(["", task])
+                    # Grouped: Date on Row 1, Task on Row 2
+                    # Row 1: The Date
+                    writer.writerow([date_str])
 
-        else: # TXT format
+                    # Row 2+: The Assignments
+                    for task in tasks:
+                        writer.writerow([task])
+
+                    # Row After: A blank row for spacing before the next date
+                    writer.writerow([])
+
+        else: # TXT format (Grouped)
             for date_str, tasks in grouped_data.items():
                 if layout_choice == "1":
                     for task in tasks:
                         f.write(f"{date_str} | {task}\n")
                 else:
-                    f.write(f"\n{date_str.upper()}\n" + "="*len(date_str) + "\n")
+                    f.write(f"\n{date_str}\n") # Date Row
                     for task in tasks:
-                        f.write(f"- {task}\n")
+                        f.write(f"{task}\n")    # Assignment Row
+                    f.write("\n")               # Spacing Row
+
 
     print(f"✅ Success! Planner saved to {filename}")
 
