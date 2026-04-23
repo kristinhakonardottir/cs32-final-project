@@ -21,8 +21,18 @@ LANG_DATA = {
 
 URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
 
-# added: 
+# changed to account for the new languages
 def format_date_by_lang(dt, lang_code):
+    """
+    Translates and formats a date object into a human-readable string
+    based on the selected language from LANG_DATA.
+
+    Arguments:
+        dt (date): A Python datetime.date object.
+        lang_code (str): The language key (e.g., 'is', 'es', 'fr').
+
+    Returns a formatted string like 'mánudagur 2. nóvember'.
+    """
     lang = LANG_DATA[lang_code]
     day_name = lang["days"][dt.strftime("%A")]
     month_name = lang["months"][dt.month]
