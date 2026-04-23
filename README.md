@@ -23,3 +23,7 @@ This project is a Python-based tool that connects a iCalendar feed, parses acade
    - Run the command: `python planner.py`
 4. **Configuration**: Follow the on-screen prompts to select your language, layout, and file format.
 5. **Output**: The script will generate a file named `planner_[lang].csv` or `planner_[lang].txt` in the same directory.
+
+### Generative AI Disclosure
+I used Gemini to assist me while I developed this project. Specifically
+
