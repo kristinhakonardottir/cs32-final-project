@@ -18,7 +18,7 @@ LANG_DATA = {
     }
 }
 
-# Change to the iCalendar feed 
+# Change to the iCalendar feed you want to fetch assignments from
 URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
 
 def format_date_by_lang(dt, lang_code):
