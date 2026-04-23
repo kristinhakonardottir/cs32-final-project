@@ -3,7 +3,7 @@ import urllib.request
 import csv
 from datetime import date
 
-# changed from just one dictionary for Icelandic to 
+# changed from just one dictionary for Icelandic to a dictionary (what language) of dictionaries (the translation)
 LANG_DATA = {
     "is": {
         "months": {1: "janúar", 2: "febrúar", 3: "mars", 4: "apríl", 5: "maí", 6: "júní", 7: "júlí", 8: "ágúst", 9: "september", 10: "október", 11: "nóvember", 12: "desember"},
