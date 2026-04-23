@@ -31,16 +31,8 @@ def format_date_by_lang(dt, lang_code):
 
 def main():
     # 1. USER PREFERENCES
-    print("--- 🌍 Configuration ---")
-    lang_choice = input("Select language (is/es/fr): ").lower()
-    if lang_choice not in LANG_DATA: lang_choice = "is"
-
-    print("\n--- 📋 Layout Options ---")
-    print("1: Standard (Each assignment is its own row)")
-    print("2: Grouped (Date on top, assignments listed below it)")
-    layout_choice = input("Select layout (1 or 2): ")
-
-    format_choice = input("\nExport format? (csv/txt): ").lower()
+    lang_choice = "is" # Defaulting to Icelandic based on your example
+    format_choice = input("Export format? (csv/txt): ").lower()
 
     # 2. FETCH AND PARSE
     print(f"\n🛰️ Fetching Canvas data...")
@@ -49,8 +41,6 @@ def main():
         raw_text = response.read().decode('utf-8')
 
     events = raw_text.split("BEGIN:VEVENT")
-
-    # We use a dictionary to group assignments by date string
     grouped_data = {}
 
     for event in events:
@@ -60,56 +50,51 @@ def main():
 
             try:
                 y, m, d = int(date_raw[0:4]), int(date_raw[4:6]), int(date_raw[6:8])
-                if y != 2026: continue
+                if y != 2026: continue # Only keep current year
+
+                # --- THE "FLIP" LOGIC ---
+                # Default values
+                course = "Almennt"
+                assignment = summary_line
+
+                if "[" in summary_line:
+                    # Logic: Split at the last '[' to separate course from assignment
+                    parts = summary_line.rsplit("[", 1)
+                    assignment = parts[0].strip()
+                    course = parts[1].replace("]", "").strip()
+
+                # Create the formatted string: "Course: Assignment"
+                flipped_summary = f"{course}: {assignment}"
 
                 formatted_date = format_date_by_lang(date(y, m, d), lang_choice)
 
                 if formatted_date not in grouped_data:
                     grouped_data[formatted_date] = []
-                grouped_data[formatted_date].append(summary_line)
+                grouped_data[formatted_date].append(flipped_summary)
             except:
                 continue
 
     # 3. EXPORT LOGIC
-    filename = f"planner_export.{format_choice}"
-    headers = LANG_DATA[lang_choice]["headers"]
+    filename = f"namsaaetlun.{format_choice}"
 
+    # Use utf-8-sig so Icelandic characters (ð, þ, á) show up in Excel
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         if format_choice == "csv":
             writer = csv.writer(f)
-            # We don't necessarily need headers for a vertical grouped layout,
-            # but we can keep them or leave them out based on preference.
-
             for date_str, tasks in grouped_data.items():
-                if layout_choice == "1":
-                    # Standard: Date and Task on the same row
-                    for task in tasks:
-                        writer.writerow([date_str, task])
-                else:
-                    # Grouped: Date on Row 1, Task on Row 2
-                    # Row 1: The Date
-                    writer.writerow([date_str])
+                writer.writerow([date_str]) # Date Row
+                for task in tasks:
+                    writer.writerow([task]) # "Course: Assignment" Row
+                writer.writerow([])         # Blank Row for spacing
 
-                    # Row 2+: The Assignments
-                    for task in tasks:
-                        writer.writerow([task])
-
-                    # Row After: A blank row for spacing before the next date
-                    writer.writerow([])
-
-        else: # TXT format (Grouped)
+        else: # TXT format
             for date_str, tasks in grouped_data.items():
-                if layout_choice == "1":
-                    for task in tasks:
-                        f.write(f"{date_str} | {task}\n")
-                else:
-                    f.write(f"\n{date_str}\n") # Date Row
-                    for task in tasks:
-                        f.write(f"{task}\n")    # Assignment Row
-                    f.write("\n")               # Spacing Row
+                f.write(f"{date_str}\n")
+                for task in tasks:
+                    f.write(f"{task}\n")
+                f.write("\n")
 
-
-    print(f"✅ Success! Planner saved to {filename}")
+    print(f"✅ Success! Your planner is ready in {filename}")
 
 if __name__ == "__main__":
     main()
