@@ -82,14 +82,39 @@ def main():
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
 
-    # getting the assignments 
+    # getting the assignments
     assignments = get_grouped_assignments(raw_text, lang_choice)
 
-    # 3. EXPORT LOGIC
+    # added: exporting logic, either csv or txt, and either row or stacked format
     filename = f"planner_export.{format_choice}"
+
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        # (Keep your existing writer logic here, using 'assignments' instead of 'grouped_data')
-        pass
+        if format_choice == "csv":
+            writer = csv.writer(f)
+
+            for date_str, tasks in assignments.items():
+                if layout_choice == "1":
+                    # Standard: Date and Task on same row
+                    for task in tasks:
+                        writer.writerow([date_str, task])
+                else:
+                    # Vertical Stacking / Grouped
+                    writer.writerow([date_str]) # Date on Row 1
+                    for task in tasks:
+                        writer.writerow([task])     # Task on Row 2+
+                    writer.writerow([])             # Extra blank row
+
+        else: # TXT format
+            for date_str, tasks in assignments.items():
+                if layout_choice == "1":
+                    for task in tasks:
+                        f.write(f"{date_str} | {task}\n")
+                else:
+                    f.write(f"\n{date_str}\n")
+                    for task in tasks:
+                        f.write(f"{task}\n")
+                    f.write("\n") # Blank spacing row
+
 
     print(f"✅ Success! Planner saved to {filename}")
 
