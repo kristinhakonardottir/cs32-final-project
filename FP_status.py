@@ -113,6 +113,56 @@ def main():
 
     filename = f"planner_{lang_choice}.{format_choice}"
 
+    with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.writer(f) if format_choice == "csv" else None
+
+        # HTML Header
+        if format_choice == "html":
+            f.write("<html><head><meta charset='utf-8'></head><body style='font-family: sans-serif;'>\n")
+            f.write(f"<h1>Planner: {lang_choice.upper()}</h1>\n")
+
+        current_day = start_date
+        while current_day <= end_date:
+            date_str = format_date_by_lang(current_day, lang_choice)
+            tasks = assignments.get(current_day, [])
+
+            if format_choice == "csv":
+                if layout_choice == "1":
+                    if not tasks:
+                        writer.writerow([date_str, ""])
+                    for task in tasks:
+                        writer.writerow([date_str, task])
+                else:
+                    writer.writerow([date_str])
+                    for task in tasks:
+                        writer.writerow([task])
+                    writer.writerow([])
+
+            elif format_choice == "html":
+                # This format is perfect for copy-pasting into the Notes app
+                f.write(f"<h3>{date_str}</h3>\n<ul>\n")
+                if not tasks:
+                    f.write("  <li>[ ] <i>Ekkert skráð</i></li>\n") # Or "No tasks"
+                for t in tasks:
+                    f.write(f"  <li>[ ] {t}</li>\n")
+                f.write("</ul>\n<hr>\n")
+
+            else: # TXT format
+                if layout_choice == "1":
+                    tasks_text = "\t".join(tasks) if tasks else ""
+                    f.write(f"{date_str}\t{tasks_text}\n")
+                else:
+                    f.write(f"{date_str}\n")
+                    for t in tasks:
+                        f.write(f"  {t}\n")
+                    f.write("\n")
+
+            current_day += timedelta(days=1)
+
+        # HTML Footer
+        if format_choice == "html":
+            f.write("</body></html>")
+
     with open(filename, 'w', encoding='utf-8-sig') as f:
 
             if format_choice == "csv":
@@ -136,7 +186,7 @@ def main():
                         f.write(f"  {t}\n")
                     f.write("\n")
 
-                    
+
             current_day += timedelta(days=1)
 
     print(f"Success! Planner saved to {filename}")
