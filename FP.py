@@ -116,7 +116,7 @@ def main():
                 else:
                     f.write(f"\n{date_str}\n")
                     if not tasks:
-                        f.write("- No assignments\n")
+                        f.write("\n")
                     for task in tasks:
                         f.write(f"- {task}\n")
                     f.write("\n")
