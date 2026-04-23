@@ -114,23 +114,6 @@ def main():
     filename = f"planner_{lang_choice}.{format_choice}"
 
     with open(filename, 'w', encoding='utf-8-sig') as f:
-        # (Keep your CSV logic here)
-
-        if format_choice == "html":
-            f.write("<html><body>\n")
-            current_day = start_date
-            while current_day <= end_date:
-                date_str = format_date_by_lang(current_day, lang_choice)
-                tasks = assignments.get(current_day, [])
-
-                f.write(f"<h3>{date_str}</h3>\n<ul>\n")
-                if not tasks:
-                    f.write("  <li>[ ] <i>No tasks</i></li>\n")
-                for t in tasks:
-                    f.write(f"  <li>[ ] {t}</li>\n")
-                f.write("</ul>\n<br>\n")
-                current_day += timedelta(days=1)
-            f.write("</body></html>")
 
             if format_choice == "csv":
                 if layout_choice == "1":
@@ -152,6 +135,8 @@ def main():
                     for t in tasks:
                         f.write(f"  {t}\n")
                     f.write("\n")
+
+                    
             current_day += timedelta(days=1)
 
     print(f"Success! Planner saved to {filename}")
