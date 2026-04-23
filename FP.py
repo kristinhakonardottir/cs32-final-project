@@ -84,7 +84,7 @@ def main():
     start_date = date(2026, 1, 1)
     end_date = max(assignments.keys()) if assignments else date(2026, 5, 31)
 
-    filename = f"planner_export.{format_choice}"
+    filename = f"planner.{format_choice}"
 
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f) if format_choice == "csv" else None
@@ -118,7 +118,7 @@ def main():
 
             current_day += timedelta(days=1)
 
-    print(f"✅ Success! Planner with chronological timeline saved to {filename}")
+    print(f"✅ Success! Planner saved to {filename}")
 
 if __name__ == "__main__":
     main()
