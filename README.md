@@ -28,7 +28,7 @@ This project is a Python-based tool that connects a iCalendar feed, parses acade
 I used Gemini to assist me while I developed this project. It helped me with:
 - The format_date_by_lang function
 - The get_grouped_assignments function
-- How the .ics file looks like, so how to use
+- How the .ics file looks like, finding the keywords that signal the assignment name and date
 
 
 The code blocks it wrote for me are:
