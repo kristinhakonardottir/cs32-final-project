@@ -69,7 +69,7 @@ def main():
     print("1: Standard (Date and Task on same row)")
     print("2: Grouped (Date row, Task row below, extra spacing)")
     layout_choice = input("Select layout (1 or 2): ")
-    format_choice = input("\nExport format? (csv/txt/html): ").lower()
+    format_choice = input("\nExport format? (csv/txt): ").lower()
 
     print("\n--- Date Range ---")
     date_input = input("Enter start date (YYYY-MM-DD): ")
@@ -103,11 +103,6 @@ def main():
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f) if format_choice == "csv" else None
 
-        # HTML Header
-        if format_choice == "html":
-            f.write("<html><head><meta charset='utf-8'></head><body style='font-family: sans-serif;'>\n")
-            f.write(f"<h1>Planner: {lang_choice.upper()}</h1>\n")
-
         current_day = start_date
         while current_day <= end_date:
             date_str = format_date_by_lang(current_day, lang_choice)
@@ -124,16 +119,7 @@ def main():
                     for task in tasks:
                         writer.writerow([task])
                     writer.writerow([])
-
-            elif format_choice == "html":
-                # This format is perfect for copy-pasting into the Notes app
-                f.write(f"<h3>{date_str}</h3>\n<ul>\n")
-                if not tasks:
-                    f.write("  <li>[ ] <i>Ekkert skráð</i></li>\n") # Or "No tasks"
-                for t in tasks:
-                    f.write(f"  <li>[ ] {t}</li>\n")
-                f.write("</ul>\n<hr>\n")
-
+                    
             else: # TXT format
                 if layout_choice == "1":
                     tasks_text = "\t".join(tasks) if tasks else ""
@@ -143,12 +129,7 @@ def main():
                     for t in tasks:
                         f.write(f"  {t}\n")
                     f.write("\n")
-
             current_day += timedelta(days=1)
-
-        # HTML Footer
-        if format_choice == "html":
-            f.write("</body></html>")
 
     print(f"Success! Planner saved to {filename}")
 
