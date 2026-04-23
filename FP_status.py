@@ -69,7 +69,7 @@ def main():
     print("1: Standard (Date and Task on same row)")
     print("2: Grouped (Date row, Task row below, extra spacing)")
     layout_choice = input("Select layout (1 or 2): ")
-    format_choice = input("\nExport format? (csv/txt): ").lower()
+    format_choice = input("\nExport format? (csv/txt/html): ").lower()
 
     print("\n--- Date Range ---")
     date_input = input("Enter start date (YYYY-MM-DD): ")
