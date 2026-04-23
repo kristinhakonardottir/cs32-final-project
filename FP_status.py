@@ -43,7 +43,6 @@ def get_grouped_assignments(raw_text, lang_choice):
 
                 py_date = date(y, m, d)
 
-                # String Flip Logic: "Course: Assignment"
                 course = "Almennt" if lang_choice == "is" else "General"
                 assignment = summary_line
                 if "[" in summary_line:
