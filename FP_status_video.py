@@ -39,7 +39,7 @@ def format_date_by_lang(dt, lang_code):
     return f"{day_name} {dt.day}. {month_name}"
 
 def main():
-    # 1. USER PREFERENCES
+    # user preferences
     print("--- 🌍 Configuration ---")
     lang_choice = input("Select language (is/es/fr): ").lower()
     if lang_choice not in LANG_DATA: lang_choice = "is"
