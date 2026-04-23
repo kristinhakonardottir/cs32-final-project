@@ -14,7 +14,7 @@ def extract_syllabus_data():
         return
 
     client = genai.Client(api_key=api_key)
-    model_id = "gemini-2.0-flash" # High-speed model with native PDF support
+    model_id = "gemini-1.5-flash" # High-speed model with native PDF support
 
     # --- 2. UPLOAD SYLLABUS ---
     # Ensure your syllabus file is named 'syllabus.pdf' in your folder
