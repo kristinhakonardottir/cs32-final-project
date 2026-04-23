@@ -8,11 +8,8 @@ Each semester I manually write in my notes app the date of each day of the whole
 
 **Project Description**
 
-
-
-Roadmap:
-1. Design the logic for getting the assignments and dates from .ics file
-2. Export it to a .csv file
-3. Add how much each assignment weighs
-4. Add other languages
-5. Add other files to export for further semester organization
+This project is a Python-based tool that connects a iCalendar feed, parses academic assignments, and exports them into a personalized planner. The tool allows users to:
+- Localize their planner into Icelandic, Spanish, or French.
+- Choose the layout as either a horizontal "spreadsheet" style or a vertical "list" style.
+- Choose the file export format as either `.csv` (for Excel/Google Sheets) or `.txt` files.
+- Get a continuous timeline by generating a row for every single calendar day, providing space for manual entries on days without assignments.
