@@ -1,6 +1,6 @@
 import urllib.request
 import csv
-from datetime import date, timedelta
+from datetime import date
 
 # --- TRANSLATION MASTER DATABASE ---
 LANG_DATA = {
@@ -41,9 +41,9 @@ def get_grouped_assignments(raw_text, lang_choice):
                 y, m, d = int(date_raw[0:4]), int(date_raw[4:6]), int(date_raw[6:8])
                 if y != 2026: continue
 
-                # We store the date object as the key for easy calendar comparison later
                 py_date = date(y, m, d)
 
+                # String Flip Logic
                 course = "Almennt" if lang_choice == "is" else "General"
                 assignment = summary_line
                 if "[" in summary_line:
@@ -73,57 +73,50 @@ def main():
     format_choice = input("\nExport format? (csv/txt): ").lower()
 
     # 2. Getting data
-    print(f"\nFetching Canvas data...")
+    print(f"\n🛰️ Fetching Canvas data...")
     req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
 
-    assignments = get_grouped_assignments(raw_text, lang_choice)
+    assignments_dict = get_grouped_assignments(raw_text, lang_choice)
 
-    # 3. GENERATE CONTINUOUS TIMELINE
-    # Start on Jan 1, 2026. End on the date of the last assignment found.
-    start_date = date(2026, 1, 1)
-    end_date = max(assignments.keys()) if assignments else date(2026, 5, 31)
-
+    # 3. EXPORT LOGIC
     filename = f"planner_export.{format_choice}"
 
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.writer(f) if format_choice == "csv" else None
+        # Sort the dates so the planner is chronological
+        sorted_dates = sorted(assignments_dict.keys())
 
-        current_day = start_date
-        while current_day <= end_date:
-            date_str = format_date_by_lang(current_day, lang_choice)
-            tasks = assignments.get(current_day, []) # Get tasks, or empty list if none
+        if format_choice == "csv":
+            writer = csv.writer(f)
+            for py_date in sorted_dates:
+                date_str = format_date_by_lang(py_date, lang_choice)
+                tasks = assignments_dict[py_date]
 
-            if format_choice == "csv":
                 if layout_choice == "1":
-                    if not tasks: # No tasks, just the date
-                        writer.writerow([date_str, "---"])
                     for task in tasks:
                         writer.writerow([date_str, task])
                 else:
-                    writer.writerow([date_str])
-                    if not tasks:
-                        writer.writerow(["No assignments"])
+                    writer.writerow([date_str]) # The date line
                     for task in tasks:
-                        writer.writerow([task])
-                    writer.writerow([])
+                        writer.writerow([task])     # The assignment line
+                    writer.writerow([])             # The blank line
 
-            else: # TXT format
+        else: # TXT format
+            for py_date in sorted_dates:
+                date_str = format_date_by_lang(py_date, lang_choice)
+                tasks = assignments_dict[py_date]
+
                 if layout_choice == "1":
-                    task_str = ", ".join(tasks) if tasks else "---"
-                    f.write(f"{date_str} | {task_str}\n")
-                else:
-                    f.write(f"\n{date_str}\n")
-                    if not tasks:
-                        f.write("\n")
                     for task in tasks:
-                        f.write(f"- {task}\n")
+                        f.write(f"{date_str} | {task}\n")
+                else:
+                    f.write(f"{date_str}\n")
+                    for task in tasks:
+                        f.write(f"{task}\n")
                     f.write("\n")
 
-            current_day += timedelta(days=1)
-
-    print(f"✅ Success! Continuous planner saved to {filename}")
+    print(f"✅ Success! Assignments-only planner saved to {filename}")
 
 if __name__ == "__main__":
     main()
