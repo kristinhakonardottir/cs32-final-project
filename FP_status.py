@@ -19,8 +19,8 @@ LANG_DATA = {
 }
 
 # Change to the iCalendar feed you want to fetch assignments from
-# URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
-URL = "https://calendar.google.com/calendar/ical/kristinhakonardottir%40college.harvard.edu/public/basic.ics"
+URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
+# URL = "https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics"
 
 def format_date_by_lang(dt, lang_code):
     """Translates and formats a date object into a human-readable string."""
