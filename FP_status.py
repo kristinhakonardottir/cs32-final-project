@@ -103,19 +103,6 @@ def main():
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f) if format_choice == "csv" else None
 
-        current_day = start_date
-        while current_day <= end_date:
-            date_str = format_date_by_lang(current_day, lang_choice)
-            tasks = assignments.get(current_day, [])
-
-            # ... inside your main function where it handles formats ...
-    format_choice = input("\nExport format? (csv/txt/html): ").lower()
-
-    filename = f"planner_{lang_choice}.{format_choice}"
-
-    with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.writer(f) if format_choice == "csv" else None
-
         # HTML Header
         if format_choice == "html":
             f.write("<html><head><meta charset='utf-8'></head><body style='font-family: sans-serif;'>\n")
