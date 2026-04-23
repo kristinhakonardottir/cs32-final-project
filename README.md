@@ -25,5 +25,7 @@ This project is a Python-based tool that connects a iCalendar feed, parses acade
 5. **Output**: The script will generate a file named `planner_[lang].csv` or `planner_[lang].txt` in the same directory.
 
 ### Generative AI Disclosure
-I used Gemini to assist me while I developed this project. Specifically
+I used Gemini to assist me while I developed this project. The code blocks it wrote for me are:
+- The LANG_DATA dictionary as it is more efficient for GAI to write such dictionary of dictionary with languages I don't speak (french and spanish)
+-
 
