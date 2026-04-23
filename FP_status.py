@@ -163,32 +163,6 @@ def main():
         if format_choice == "html":
             f.write("</body></html>")
 
-    with open(filename, 'w', encoding='utf-8-sig') as f:
-
-            if format_choice == "csv":
-                if layout_choice == "1":
-                    if not tasks:
-                        writer.writerow([date_str, ""])
-                    for task in tasks:
-                        writer.writerow([date_str, task])
-                else:
-                    writer.writerow([date_str])
-                    for task in tasks:
-                        writer.writerow([task])
-                    writer.writerow([])
-            else: # TXT format
-                if layout_choice == "1":
-                    tasks_text = "\t".join(tasks) if tasks else ""
-                    f.write(f"{date_str}\t{tasks_text}\n")
-                else:
-                    f.write(f"{date_str}\n")
-                    for t in tasks:
-                        f.write(f"  {t}\n")
-                    f.write("\n")
-
-
-            current_day += timedelta(days=1)
-
     print(f"Success! Planner saved to {filename}")
 
 if __name__ == "__main__":
