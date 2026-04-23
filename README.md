@@ -1,10 +1,13 @@
 # cs32-final-project
 
-**Semester Assignment Planner**
+## Semester Assignment Planner
+
+**Motivation**
 
 Each semester I manually write in my notes app the date of each day of the whole semester and add assignments as a to-do list under the date they are due. I like having my semester planned and to have to-do lists in my notes app (instead of an excel sheet which I know can do this pretty easily), but I want to make this process more efficient. Also, I like to have the months and the day in Icelandic which excel's date function can't do - it's only in english.
 
-Therefore, my final project 
+**Project Description**
+
 
 
 Roadmap:
