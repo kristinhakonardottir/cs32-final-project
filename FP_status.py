@@ -61,18 +61,18 @@ def get_grouped_assignments(raw_text, lang_choice):
 
 def main():
     # 1. User preferences
-    print("--- 🌍 Configuration ---")
+    print("--- Configuration ---")
     lang_choice = input("Select language (is/es/fr): ").lower()
     if lang_choice not in LANG_DATA: lang_choice = "is"
 
-    print("\n--- 📋 Layout Options ---")
+    print("\n--- Layout Options ---")
     print("1: Standard (Date and Task on same row)")
     print("2: Grouped (Date row, Task row below, extra spacing)")
     layout_choice = input("Select layout (1 or 2): ")
     format_choice = input("\nExport format? (csv/txt): ").lower()
 
-    # 2. Data Acquisition
-    print(f"\n🛰️ Fetching Canvas data...")
+    # 2. Getting data
+    print(f"\nFetching Canvas data...")
     req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
@@ -96,22 +96,18 @@ def main():
             if format_choice == "csv":
                 if layout_choice == "1":
                     if not tasks:
-                        writer.writerow([date_str, ""]) # Date row, empty task column
+                        writer.writerow([date_str, ""])
                     for task in tasks:
                         writer.writerow([date_str, task])
                 else:
-                    writer.writerow([date_str]) # Date Row
+                    writer.writerow([date_str])
                     for task in tasks:
-                        writer.writerow([task]) # Assignment Rows
-                    writer.writerow([])         # Blank spacing row
+                        writer.writerow([task])
+                    writer.writerow([])
 
             else: # TXT format
                 if layout_choice == "1":
-                    # \t acts as a "Move to next column" command
-                    # We join the tasks with tabs so each gets its own 'column'
                     tasks_text = "\t".join(tasks) if tasks else ""
-
-                    # We put a tab after the date_str to start the first assignment column
                     f.write(f"{date_str}\t{tasks_text}\n")
                 else:
                     # Vertical list (unchanged)
@@ -122,7 +118,7 @@ def main():
 
             current_day += timedelta(days=1)
 
-    print(f"✅ Success! Planner saved to {filename}")
+    print(f"Success! Planner saved to {filename}")
 
 if __name__ == "__main__":
     main()
