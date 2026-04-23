@@ -1,6 +1,6 @@
 import urllib.request
 import csv
-from datetime import date
+from datetime import date, timedelta
 
 # --- TRANSLATION MASTER DATABASE ---
 LANG_DATA = {
@@ -43,7 +43,7 @@ def get_grouped_assignments(raw_text, lang_choice):
 
                 py_date = date(y, m, d)
 
-                # String Flip Logic
+                # String Flip Logic: "Course: Assignment"
                 course = "Almennt" if lang_choice == "is" else "General"
                 assignment = summary_line
                 if "[" in summary_line:
@@ -72,51 +72,53 @@ def main():
     layout_choice = input("Select layout (1 or 2): ")
     format_choice = input("\nExport format? (csv/txt): ").lower()
 
-    # 2. Getting data
+    # 2. Data Acquisition
     print(f"\n🛰️ Fetching Canvas data...")
     req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
 
-    assignments_dict = get_grouped_assignments(raw_text, lang_choice)
+    assignments = get_grouped_assignments(raw_text, lang_choice)
 
-    # 3. EXPORT LOGIC
+    # 3. Timeline Bounds (Jan 1 to last assignment)
+    start_date = date(2026, 1, 1)
+    end_date = max(assignments.keys()) if assignments else date(2026, 5, 31)
+
     filename = f"planner_export.{format_choice}"
 
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        # Sort the dates so the planner is chronological
-        sorted_dates = sorted(assignments_dict.keys())
+        writer = csv.writer(f) if format_choice == "csv" else None
 
-        if format_choice == "csv":
-            writer = csv.writer(f)
-            for py_date in sorted_dates:
-                date_str = format_date_by_lang(py_date, lang_choice)
-                tasks = assignments_dict[py_date]
+        current_day = start_date
+        while current_day <= end_date:
+            date_str = format_date_by_lang(current_day, lang_choice)
+            tasks = assignments.get(current_day, [])
 
+            if format_choice == "csv":
                 if layout_choice == "1":
+                    if not tasks:
+                        writer.writerow([date_str, ""]) # Date row, empty task column
                     for task in tasks:
                         writer.writerow([date_str, task])
                 else:
-                    writer.writerow([date_str]) # The date line
+                    writer.writerow([date_str]) # Date Row
                     for task in tasks:
-                        writer.writerow([task])     # The assignment line
-                    writer.writerow([])             # The blank line
+                        writer.writerow([task]) # Assignment Rows
+                    writer.writerow([])         # Blank spacing row
 
-        else: # TXT format
-            for py_date in sorted_dates:
-                date_str = format_date_by_lang(py_date, lang_choice)
-                tasks = assignments_dict[py_date]
-
+            else: # TXT format
                 if layout_choice == "1":
-                    for task in tasks:
-                        f.write(f"{date_str} | {task}\n")
+                    task_str = ", ".join(tasks) if tasks else ""
+                    f.write(f"{date_str} | {task_str}\n")
                 else:
                     f.write(f"{date_str}\n")
                     for task in tasks:
                         f.write(f"{task}\n")
                     f.write("\n")
 
-    print(f"✅ Success! Assignments-only planner saved to {filename}")
+            current_day += timedelta(days=1)
+
+    print(f"✅ Success! Planner with chronological timeline saved to {filename}")
 
 if __name__ == "__main__":
     main()
