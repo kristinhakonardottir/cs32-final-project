@@ -30,7 +30,10 @@ I used Gemini to assist me while I developed this project. It helped me with:
 - The get_grouped_assignments function
 - How the .ics file looks like, finding the keywords that signal the assignment name and date
 - How to use the urllib library
-- 
+- How to format the "spreadsheet" style and the "list" style
+- How to use the datetime library
+
+I wrote the logic of the "if" statements and functions myself, and then prompted Gemini with 
 
 
 The code blocks it wrote for me are:
