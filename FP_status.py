@@ -2,7 +2,7 @@ import urllib.request
 import csv
 from datetime import date
 
-# --- TRANSLATION MASTER DATABASE ---
+# Dictionaries (different languages is/es/fr) of dictionaries (the translations of the months and days)
 LANG_DATA = {
     "is": {
         "months": {1: "janúar", 2: "febrúar", 3: "mars", 4: "apríl", 5: "maí", 6: "júní", 7: "júlí", 8: "ágúst", 9: "september", 10: "október", 11: "nóvember", 12: "desember"},
@@ -21,13 +21,52 @@ LANG_DATA = {
 URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
 
 def format_date_by_lang(dt, lang_code):
+    """
+    Translates and formats a date object into a human-readable string
+    based on the selected language from LANG_DATA.
+    """
     lang = LANG_DATA[lang_code]
     day_name = lang["days"][dt.strftime("%A")]
     month_name = lang["months"][dt.month]
     return f"{day_name} {dt.day}. {month_name}"
 
+def get_grouped_assignments(raw_text, lang_choice):
+    """
+    Parses raw ICS text, filters for 2026, flips strings to 'Course: Assignment',
+    and groups them by date in a dictionary.
+    """
+    events = raw_text.split("BEGIN:VEVENT")
+    grouped_data = {}
+
+    for event in events:
+        if "SUMMARY:" in event and "DTSTART" in event:
+            summary_line = event.split("SUMMARY:")[1].split("\n")[0].strip()
+            date_raw = event.split("DTSTART")[1].split(":")[1][:8]
+
+            try:
+                y, m, d = int(date_raw[0:4]), int(date_raw[4:6]), int(date_raw[6:8])
+                if y != 2026: continue
+
+                course = "Almennt" if lang_choice == "is" else "General"
+                assignment = summary_line
+
+                if "[" in summary_line:
+                    parts = summary_line.rsplit("[", 1)
+                    assignment = parts[0].strip()
+                    course = parts[1].replace("]", "").strip()
+
+                flipped_summary = f"{course}: {assignment}"
+                formatted_date = format_date_by_lang(date(y, m, d), lang_choice)
+
+                if formatted_date not in grouped_data:
+                    grouped_data[formatted_date] = []
+                grouped_data[formatted_date].append(flipped_summary)
+            except:
+                continue
+    return grouped_data
+
 def main():
-    # 1. USER PREFERENCES
+    # User preferences
     print("--- 🌍 Configuration ---")
     lang_choice = input("Select language (is/es/fr): ").lower()
     if lang_choice not in LANG_DATA: lang_choice = "is"
@@ -39,64 +78,36 @@ def main():
 
     format_choice = input("\nExport format? (csv/txt): ").lower()
 
-    # 2. FETCH AND PARSE
-    print(f"\n🛰️ Fetching Canvas data...")
+    # Getting data
+    print(f"\nFetching Canvas data...")
     req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as response:
         raw_text = response.read().decode('utf-8')
 
-    events = raw_text.split("BEGIN:VEVENT")
-    grouped_data = {}
+    # Getting the assignments
+    assignments = get_grouped_assignments(raw_text, lang_choice)
 
-    for event in events:
-        if "SUMMARY:" in event and "DTSTART" in event:
-            summary_line = event.split("SUMMARY:")[1].split("\n")[0].strip()
-            date_raw = event.split("DTSTART")[1].split(":")[1][:8]
-
-            try:
-                y, m, d = int(date_raw[0:4]), int(date_raw[4:6]), int(date_raw[6:8])
-                if y != 2026: continue # Filter for 2026
-
-                # --- THE STRING FLIP LOGIC ---
-                course = "Almennt" if lang_choice == "is" else "General"
-                assignment = summary_line
-
-                if "[" in summary_line:
-                    parts = summary_line.rsplit("[", 1)
-                    assignment = parts[0].strip()
-                    course = parts[1].replace("]", "").strip()
-
-                # Reconstruct as "Course: Assignment"
-                flipped_summary = f"{course}: {assignment}"
-
-                formatted_date = format_date_by_lang(date(y, m, d), lang_choice)
-
-                if formatted_date not in grouped_data:
-                    grouped_data[formatted_date] = []
-                grouped_data[formatted_date].append(flipped_summary)
-            except:
-                continue
-
-    # 3. EXPORT LOGIC
+    # Exporting the schedule as .csv or .txt file, and either with each assignment row or stacked format
     filename = f"planner_export.{format_choice}"
 
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         if format_choice == "csv":
             writer = csv.writer(f)
 
-            for date_str, tasks in grouped_data.items():
+            for date_str, tasks in assignments.items():
                 if layout_choice == "1":
+                    # Standard: Date and Task on same row
                     for task in tasks:
                         writer.writerow([date_str, task])
                 else:
-                    # Vertical Stacking
+                    # Vertical Stacking / Grouped
                     writer.writerow([date_str]) # Date on Row 1
                     for task in tasks:
                         writer.writerow([task])     # Task on Row 2+
-                    writer.writerow([])             # Extra blank row for spacing
+                    writer.writerow([])             # Extra blank row
 
         else: # TXT format
-            for date_str, tasks in grouped_data.items():
+            for date_str, tasks in assignments.items():
                 if layout_choice == "1":
                     for task in tasks:
                         f.write(f"{date_str} | {task}\n")
@@ -105,6 +116,7 @@ def main():
                     for task in tasks:
                         f.write(f"{task}\n")
                     f.write("\n") # Blank spacing row
+
 
     print(f"✅ Success! Planner saved to {filename}")
 
