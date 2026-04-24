@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planner — Assignment Tracker</title>
+<link href="https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F2EB;
+    --surface: #FDFCF8;
+    --surface2: #EAE7DE;
+    --ink: #1A1814;
+    --ink2: #5A5750;
+    --ink3: #9A968F;
+    --accent: #C4421A;
+    --accent-light: #F5E8E3;
+    --accent2: #2A5F4E;
+    --accent2-light: #E3F0EB;
+    --border: rgba(26,24,20,0.1);
+    --border2: rgba(26,24,20,0.18);
+    --mono: 'DM Mono', monospace;
+    --serif: 'Fraunces', serif;
+  }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* === HEADER === */
+  header {
+    grid-column: 1 / -1;
+    background: var(--ink);
+    color: #F5F2EB;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+  header h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-style: italic;
+    font-size: 1.4rem;
+    letter-spacing: 0.01em;
+  }
+  header .header-meta {
+    font-size: 0.72rem;
+    color: rgba(245,242,235,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  header .today-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.75rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* === SIDEBAR === */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border2);
+    padding: 1.25rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar-section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 0.6rem;
+  }
+
+  /* Mini calendar */
+  .mini-cal { width: 100%; }
+  .mini-cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  .mini-cal-header span {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 0.95rem;
+    font-weight: 300;
+  }
+  .mini-cal-nav {
+    background: none;
+    border: none;
+    color: var(--ink2);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 6px;
+    transition: color 0.15s;
+  }
+  .mini-cal-nav:hover { color: var(--accent); }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+  .cal-day-label {
+    font-size: 0.6rem;
+    color: var(--ink3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 0;
+  }
+  .cal-day {
+    font-size: 0.72rem;
+    padding: 5px 2px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.1s;
+    color: var(--ink2);
+  }
+  .cal-day:hover { background: var(--surface2); }
+  .cal-day.today { background: var(--ink); color: #F5F2EB; border-radius: 3px; }
+  .cal-day.selected { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+  .cal-day.has-task::after {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin: 1px auto 0;
+  }
+  .cal-day.other-month { color: var(--ink3); }
+
+  /* Quick add */
+  .add-form { display: flex; flex-direction: column; gap: 0.5rem; }
+  .add-form input, .add-form select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.5rem 0.65rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-form input:focus, .add-form select:focus {
+    border-color: var(--accent);
+  }
+  .add-form input::placeholder { color: var(--ink3); }
+  .btn-add {
+    background: var(--ink);
+    color: #F5F2EB;
+    border: none;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.55rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-add:hover { background: var(--accent); }
+
+  /* Tag list */
+  .tag-list { display: flex; flex-direction: column; gap: 0.35rem; }
+  .tag-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.3rem 0.4rem;
+    border-radius: 3px;
+    transition: background 0.1s;
+    color: var(--ink2);
+  }
+  .tag-item:hover { background: var(--surface2); }
+  .tag-item.active { color: var(--ink); font-weight: 500; }
+  .tag-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tag-count {
+    margin-left: auto;
+    font-size: 0.65rem;
+    color: var(--ink3);
+  }
+
+  /* === MAIN === */
+  main {
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .view-tabs {
+    display: flex;
+    border: 1px solid var(--border2);
+    overflow: hidden;
+  }
+  .view-tab {
+    background: none;
+    border: none;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.85rem;
+    cursor: pointer;
+    color: var(--ink2);
+    border-right: 1px solid var(--border2);
+    transition: background 0.1s, color 0.1s;
+  }
+  .view-tab:last-child { border-right: none; }
+  .view-tab.active { background: var(--ink); color: #F5F2EB; }
+  .search-box {
+    flex: 1;
+    min-width: 160px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.4rem 0.75rem;
+    outline: none;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--ink3); }
+
+  /* Stats strip */
+  .stats-strip {
+    display: flex;
+    gap: 1px;
+    margin-bottom: 1.25rem;
+    background: var(--border);
+  }
+  .stat {
+    flex: 1;
+    background: var(--surface);
+    padding: 0.65rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stat-num {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .stat-label { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); }
+
+  /* Day view */
+  .day-view { display: flex; flex-direction: column; gap: 0; }
+  .day-group {
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0;
+  }
+  .day-label-col {
+    width: 140px;
+    flex-shrink: 0;
+    padding: 1rem 0.75rem 1rem 0;
+    border-right: 1px solid var(--border);
+  }
+  .day-name {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 0.85rem;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .day-date {
+    font-size: 0.62rem;
+    color: var(--ink3);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+  .day-tasks-col {
+    flex: 1;
+    padding: 0.6rem 0 0.6rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-height: 48px;
+  }
+  .empty-day { color: var(--ink3); font-size: 0.72rem; align-self: center; }
+
+  /* Task card */
+  .task-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.5rem 0.65rem;
+    background: var(--surface);
+    border-left: 2px solid transparent;
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+    position: relative;
+  }
+  .task-card:hover { background: var(--surface2); }
+  .task-card.done { opacity: 0.45; }
+  .task-card.done .task-title { text-decoration: line-through; }
+  .task-check {
+    width: 14px; height: 14px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+    background: var(--bg);
+    transition: background 0.15s, border-color 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .task-card.done .task-check {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+  .task-check::after {
+    content: '';
+    display: none;
+    width: 7px; height: 4px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+  .task-card.done .task-check::after { display: block; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-title { font-size: 0.8rem; line-height: 1.4; color: var(--ink); }
+  .task-course {
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+  .task-del {
+    background: none; border: none; cursor: pointer;
+    color: var(--ink3); font-size: 0.75rem; padding: 0 2px;
+    opacity: 0; transition: opacity 0.1s;
+    line-height: 1;
+  }
+  .task-card:hover .task-del { opacity: 1; }
+  .task-del:hover { color: var(--accent); }
+
+  /* Priority / tag colors */
+  .pri-high { border-left-color: #C4421A; }
+  .pri-med  { border-left-color: #C4841A; }
+  .pri-low  { border-left-color: #2A5F4E; }
+
+  /* Week view grid */
+  .week-view {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+  .week-col {
+    background: var(--surface);
+    min-height: 200px;
+  }
+  .week-col-header {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .week-col-day { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); }
+  .week-col-date { font-family: var(--serif); font-style: italic; font-size: 1.1rem; font-weight: 300; }
+  .week-col-date.is-today { color: var(--accent); }
+  .week-tasks { padding: 0.4rem; display: flex; flex-direction: column; gap: 4px; }
+  .week-task-pill {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: background 0.1s;
+  }
+  .week-task-pill:hover { background: #f0d2c8; }
+  .week-task-pill.done-pill { background: var(--accent2-light); color: var(--accent2); text-decoration: line-through; }
+
+  /* Detail panel */
+  .detail-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(26,24,20,0.35);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-panel {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    width: 420px;
+    max-width: 90vw;
+    padding: 1.5rem;
+    position: relative;
+  }
+  .detail-close {
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: none; cursor: pointer;
+    font-size: 1.1rem; color: var(--ink3); line-height: 1;
+  }
+  .detail-close:hover { color: var(--accent); }
+  .detail-label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 0.25rem; }
+  .detail-val { font-size: 0.85rem; color: var(--ink); margin-bottom: 0.75rem; }
+  .detail-title { font-family: var(--serif); font-style: italic; font-weight: 300; font-size: 1.2rem; margin-bottom: 1rem; line-height: 1.3; }
+  .priority-picker { display: flex; gap: 0.4rem; margin-top: 0.25rem; }
+  .pri-btn {
+    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.06em;
+    padding: 0.25rem 0.6rem; border: 1px solid var(--border2);
+    background: none; cursor: pointer; transition: background 0.1s;
+  }
+  .pri-btn:hover { background: var(--surface2); }
+  .pri-btn.active-high { background: #F5E8E3; border-color: var(--accent); color: var(--accent); }
+  .pri-btn.active-med { background: #FBF0E0; border-color: #C4841A; color: #C4841A; }
+  .pri-btn.active-low { background: var(--accent2-light); border-color: var(--accent2); color: var(--accent2); }
+
+  /* Export bar */
+  .export-bar {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .export-label { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); margin-right: 0.25rem; }
+  .btn-export {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+    color: var(--ink2);
+    transition: background 0.1s;
+    text-transform: uppercase;
+  }
+  .btn-export:hover { background: var(--ink); color: #F5F2EB; }
+
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--ink); color: #F5F2EB;
+    font-size: 0.75rem; padding: 0.6rem 1rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>planner</h1>
+  <span class="header-meta">assignment tracker</span>
+  <span class="today-badge" id="todayBadge"></span>
+</header>
+
+<aside>
+  <div>
+    <div class="sidebar-section-label">navigate</div>
+    <div class="mini-cal">
+      <div class="mini-cal-header">
+        <button class="mini-cal-nav" id="prevMonth">&#8592;</button>
+        <span id="calMonthLabel"></span>
+        <button class="mini-cal-nav" id="nextMonth">&#8594;</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="sidebar-section-label">add task</div>
+    <div class="add-form">
+      <input type="text" id="newTask" placeholder="Task name...">
+      <input type="text" id="newCourse" placeholder="Course / tag...">
+      <input type="date" id="newDate">
+      <select id="newPriority">
+        <option value="none">— priority —</option>
+        <option value="high">High</option>
+        <option value="med">Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <button class="btn-add" id="btnAdd">+ Add task</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="sidebar-section-label">courses</div>
+    <div class="tag-list" id="tagList"></div>
+  </div>
+</aside>
+
+<main>
+  <div class="toolbar">
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="list">List</button>
+      <button class="view-tab" data-view="week">Week</button>
+    </div>
+    <input class="search-box" id="searchBox" placeholder="Search tasks...">
+  </div>
+
+  <div class="stats-strip" id="statsStrip"></div>
+
+  <div id="mainContent"></div>
+
+  <div class="export-bar">
+    <span class="export-label">Export</span>
+    <button class="btn-export" id="exportTxt">TXT</button>
+    <button class="btn-export" id="exportCsv">CSV</button>
+    <button class="btn-export" id="exportJson">JSON</button>
+  </div>
+</main>
+
+<!-- Detail overlay -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel">
+    <button class="detail-close" id="detailClose">&#x2715;</button>
+    <div class="detail-title" id="detailTitle"></div>
+    <div class="detail-label">Course</div>
+    <div class="detail-val" id="detailCourse"></div>
+    <div class="detail-label">Date</div>
+    <div class="detail-val" id="detailDate"></div>
+    <div class="detail-label">Priority</div>
+    <div class="priority-picker" id="detailPriority"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const COLORS = {
+  'none': '#9A968F',
+  'high': '#C4421A',
+  'med': '#C4841A',
+  'low': '#2A5F4E'
+};
+
+const COURSE_COLORS = [
+  '#C4421A','#C4841A','#2A5F4E','#185FA5','#7F77DD','#D4537E','#1D9E75','#888780'
+];
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_SHORT = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+let tasks = JSON.parse(localStorage.getItem('planner_tasks') || '[]');
+let view = 'list';
+let calYear, calMonth;
+let selectedDate = null;
+let activeTag = null;
+let openTaskId = null;
+
+const today = new Date();
+today.setHours(0,0,0,0);
+
+function save() { localStorage.setItem('planner_tasks', JSON.stringify(tasks)); }
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function parseDateStr(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function formatDateFull(d) {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return `${days[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+// seed demo data if empty
+if (!tasks.length) {
+  const seed = [
+    { id: uid(), title: 'Reading response Ch.4', course: 'History 201', date: fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate())), priority: 'high', done: false },
+    { id: uid(), title: 'Problem set 3', course: 'Math 301', date: fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()+1)), priority: 'high', done: false },
+    { id: uid(), title: 'Draft thesis outline', course: 'English 220', date: fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()+2)), priority: 'med', done: false },
+    { id: uid(), title: 'Lab report write-up', course: 'Chem 101', date: fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()+2)), priority: 'high', done: false },
+    { id: uid(), title: 'Peer review submission', course: 'English 220', date: fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()+4)), priority: 'low', done: false },
+    { id: uid(), title: 'Weekly vocab quiz', course: 'Spanish 102', date: fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()+5)), priority: 'med', done: true },
+    { id: uid(), title: 'Midterm study guide', course: 'History 201', date: fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()+7)), priority: 'high', done: false },
+  ];
+  tasks = seed;
+  save();
+}
+
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function courseColor(name) {
+  if (!name) return COLORS['none'];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xFFFF;
+  return COURSE_COLORS[h % COURSE_COLORS.length];
+}
+
+function getCourses() {
+  const map = {};
+  tasks.forEach(t => {
+    const c = t.course || 'Uncategorized';
+    map[c] = (map[c] || 0) + 1;
+  });
+  return map;
+}
+
+function filteredTasks() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  return tasks.filter(t => {
+    if (activeTag && (t.course || 'Uncategorized') !== activeTag) return false;
+    if (q && !t.title.toLowerCase().includes(q) && !(t.course||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+// ---- RENDER FUNCTIONS ----
+
+function renderHeader() {
+  document.getElementById('todayBadge').textContent = today.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function renderStats() {
+  const all = filteredTasks();
+  const done = all.filter(t=>t.done).length;
+  const upcoming = all.filter(t=>!t.done && parseDateStr(t.date) >= today).length;
+  const overdue = all.filter(t=>!t.done && parseDateStr(t.date) < today).length;
+  document.getElementById('statsStrip').innerHTML = `
+    <div class="stat"><span class="stat-num">${all.length}</span><span class="stat-label">total</span></div>
+    <div class="stat"><span class="stat-num">${upcoming}</span><span class="stat-label">upcoming</span></div>
+    <div class="stat"><span class="stat-num">${done}</span><span class="stat-label">done</span></div>
+    <div class="stat"><span class="stat-num">${overdue}</span><span class="stat-label">overdue</span></div>
+  `;
+}
+
+function renderTags() {
+  const courses = getCourses();
+  const el = document.getElementById('tagList');
+  el.innerHTML = `
+    <div class="tag-item ${!activeTag?'active':''}" data-tag="">
+      <span class="tag-dot" style="background:#1A1814"></span>
+      All tasks
+      <span class="tag-count">${tasks.length}</span>
+    </div>
+  ` + Object.entries(courses).map(([c, n]) => `
+    <div class="tag-item ${activeTag===c?'active':''}" data-tag="${c}">
+      <span class="tag-dot" style="background:${courseColor(c)}"></span>
+      ${c}
+      <span class="tag-count">${n}</span>
+    </div>
+  `).join('');
+
+  el.querySelectorAll('.tag-item').forEach(el => {
+    el.addEventListener('click', () => {
+      activeTag = el.dataset.tag || null;
+      renderAll();
+    });
+  });
+}
+
+function renderMiniCal() {
+  const grid = document.getElementById('calGrid');
+  const label = document.getElementById('calMonthLabel');
+  label.textContent = `${MONTHS[calMonth].slice(0,3)} ${calYear}`;
+
+  const taskDates = new Set(tasks.map(t => t.date));
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+
+  let html = DAYS_SHORT.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) {
+    const d = prevDays - firstDay + i + 1;
+    html += `<div class="cal-day other-month">${d}</div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = isSameDay(new Date(calYear, calMonth, d), today);
+    const isSel = selectedDate === dateStr;
+    const hasTasks = taskDates.has(dateStr);
+    html += `<div class="cal-day ${isToday?'today':''} ${isSel?'selected':''} ${hasTasks?'has-task':''}" data-date="${dateStr}">${d}</div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.cal-day[data-date]').forEach(el => {
+    el.addEventListener('click', () => {
+      selectedDate = el.dataset.date;
+      renderAll();
+    });
+  });
+}
+
+function renderListView() {
+  let ft = filteredTasks();
+  if (selectedDate) ft = ft.filter(t => t.date === selectedDate);
+  ft.sort((a,b) => a.date.localeCompare(b.date));
+
+  const grouped = {};
+  ft.forEach(t => {
+    if (!grouped[t.date]) grouped[t.date] = [];
+    grouped[t.date].push(t);
+  });
+
+  const dateKeys = Object.keys(grouped).sort();
+  if (!dateKeys.length) {
+    document.getElementById('mainContent').innerHTML = `<div style="color:var(--ink3);font-size:0.8rem;padding:2rem 0">No tasks found.</div>`;
+    return;
+  }
+
+  document.getElementById('mainContent').innerHTML = `<div class="day-view">${
+    dateKeys.map(dk => {
+      const d = parseDateStr(dk);
+      const isPast = d < today && !isSameDay(d, today);
+      const isToday2 = isSameDay(d, today);
+      return `<div class="day-group">
+        <div class="day-label-col">
+          <div class="day-name" style="${isToday2?'color:var(--accent)':''}">${d.toLocaleDateString('en-US',{weekday:'long'})}</div>
+          <div class="day-date">${MONTHS[d.getMonth()].slice(0,3)} ${d.getDate()}${isPast?' · past':''}</div>
+        </div>
+        <div class="day-tasks-col">
+          ${grouped[dk].map(t => taskCard(t)).join('')}
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+
+  bindTaskCards();
+}
+
+function renderWeekView() {
+  const base = selectedDate ? parseDateStr(selectedDate) : today;
+  const dow = base.getDay();
+  const weekStart = new Date(base); weekStart.setDate(base.getDate() - dow);
+
+  const cols = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+    const ds = fmtDate(d);
+    const dayTasks = filteredTasks().filter(t => t.date === ds);
+    const isToday2 = isSameDay(d, today);
+    cols.push(`<div class="week-col">
+      <div class="week-col-header">
+        <div class="week-col-day">${DAYS_SHORT[(i+0)%7]}</div>
+        <div class="week-col-date ${isToday2?'is-today':''}">${d.getDate()}</div>
+      </div>
+      <div class="week-tasks">
+        ${dayTasks.map(t => `<div class="week-task-pill ${t.done?'done-pill':''}" data-id="${t.id}">${t.course?t.course+': ':''} ${t.title}</div>`).join('')}
+      </div>
+    </div>`);
+  }
+  document.getElementById('mainContent').innerHTML = `<div class="week-view">${cols.join('')}</div>`;
+
+  document.querySelectorAll('.week-task-pill').forEach(el => {
+    el.addEventListener('click', () => openDetail(el.dataset.id));
+  });
+}
+
+function taskCard(t) {
+  const priClass = t.priority && t.priority !== 'none' ? `pri-${t.priority}` : '';
+  return `<div class="task-card ${t.done?'done':''} ${priClass}" data-id="${t.id}">
+    <div class="task-check" data-check="${t.id}"></div>
+    <div class="task-body">
+      <div class="task-title">${t.title}</div>
+      ${t.course ? `<div class="task-course" style="color:${courseColor(t.course)}">${t.course}</div>` : ''}
+    </div>
+    <button class="task-del" data-del="${t.id}" title="Delete">&#x2715;</button>
+  </div>`;
+}
+
+function bindTaskCards() {
+  document.querySelectorAll('.task-card').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.closest('[data-check]') || e.target.closest('[data-del]')) return;
+      openDetail(el.dataset.id);
+    });
+  });
+  document.querySelectorAll('[data-check]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const t = tasks.find(x => x.id === el.dataset.check);
+      if (t) { t.done = !t.done; save(); renderAll(); }
+    });
+  });
+  document.querySelectorAll('[data-del]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      tasks = tasks.filter(x => x.id !== el.dataset.del);
+      save(); renderAll(); showToast('Task deleted.');
+    });
+  });
+}
+
+function openDetail(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  openTaskId = id;
+  document.getElementById('detailTitle').textContent = t.title;
+  document.getElementById('detailCourse').textContent = t.course || '—';
+  document.getElementById('detailDate').textContent = t.date ? formatDateFull(parseDateStr(t.date)) : '—';
+  const pp = document.getElementById('detailPriority');
+  pp.innerHTML = ['high','med','low'].map(p =>
+    `<button class="pri-btn ${t.priority===p?'active-'+p:''}" data-pri="${p}">${p}</button>`
+  ).join('');
+  pp.querySelectorAll('.pri-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const t2 = tasks.find(x => x.id === openTaskId);
+      if (t2) { t2.priority = b.dataset.pri; save(); openDetail(openTaskId); renderAll(); }
+    });
+  });
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function renderAll() {
+  renderStats();
+  renderTags();
+  renderMiniCal();
+  if (view === 'list') renderListView();
+  else renderWeekView();
+}
+
+// ---- INIT ----
+calYear = today.getFullYear();
+calMonth = today.getMonth();
+
+document.getElementById('newDate').value = fmtDate(today);
+
+document.getElementById('prevMonth').addEventListener('click', () => {
+  calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderMiniCal();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderMiniCal();
+});
+
+document.getElementById('btnAdd').addEventListener('click', () => {
+  const title = document.getElementById('newTask').value.trim();
+  const course = document.getElementById('newCourse').value.trim();
+  const date = document.getElementById('newDate').value;
+  const priority = document.getElementById('newPriority').value;
+  if (!title || !date) { showToast('Enter a task name and date.'); return; }
+  tasks.push({ id: uid(), title, course, date, priority, done: false });
+  save();
+  document.getElementById('newTask').value = '';
+  document.getElementById('newCourse').value = '';
+  document.getElementById('newPriority').value = 'none';
+  renderAll();
+  showToast('Task added!');
+});
+
+document.getElementById('newTask').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btnAdd').click();
+});
+
+document.querySelectorAll('.view-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    view = btn.dataset.view;
+    document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAll();
+  });
+});
+
+document.getElementById('searchBox').addEventListener('input', renderAll);
+
+document.getElementById('detailClose').addEventListener('click', () => {
+  document.getElementById('detailOverlay').classList.remove('open');
+});
+document.getElementById('detailOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('detailOverlay'))
+    document.getElementById('detailOverlay').classList.remove('open');
+});
+
+// Exports
+document.getElementById('exportTxt').addEventListener('click', () => {
+  const sorted = [...tasks].sort((a,b)=>a.date.localeCompare(b.date));
+  const lines = sorted.map(t => `${t.date}\t${t.course ? t.course+': ' : ''}${t.title}\t[${t.priority}]${t.done?' ✓':''}`);
+  download('planner.txt', lines.join('\n'));
+});
+document.getElementById('exportCsv').addEventListener('click', () => {
+  const sorted = [...tasks].sort((a,b)=>a.date.localeCompare(b.date));
+  const rows = [['Date','Course','Task','Priority','Done'],...sorted.map(t=>[t.date, t.course||'', t.title, t.priority, t.done?'yes':'no'])];
+  download('planner.csv', rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n'));
+});
+document.getElementById('exportJson').addEventListener('click', () => {
+  download('planner.json', JSON.stringify(tasks, null, 2));
+});
+
+function download(name, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type:'text/plain'}));
+  a.download = name;
+  a.click();
+  showToast(`Exported as ${name}`);
+}
+
+renderHeader();
+renderAll();
+</script>
+</body>
+</html>
