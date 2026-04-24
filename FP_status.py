@@ -121,7 +121,7 @@ def main():
         with urllib.request.urlopen(req) as response:
             raw_text = response.read().decode('utf-8')
     except Exception as e:
-        print(f"xyz: Error fetching URL: {e}")
+        print(f"Error fetching URL: {e}")
         return
 
     assignments = get_grouped_assignments(raw_text)
