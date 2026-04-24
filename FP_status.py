@@ -23,8 +23,8 @@ LANG_DATA = {
 }
 
 # The .ics file of the calendar
-URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
-# URL = "https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics"
+# URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
+URL = "https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics"
 
 
 def format_date_by_lang(dt, lang_code):
