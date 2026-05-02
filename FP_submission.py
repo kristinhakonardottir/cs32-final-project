@@ -23,8 +23,8 @@ LANG_DATA = {
 }
 
 # The .ics file of the calendar
-# URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
-URL = "https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics"
+URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
+# URL = "https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics"
 
 
 def format_date_by_lang(dt, lang_code):
@@ -75,10 +75,31 @@ def collect_weights(assignments):
     Loops through courses and assignments until the user is done.
     Returns a dict mapping assignment label -> weight string (or None)."""
 
-    # Ask if user wants to add weights at all
+    # Build a flat list of every unique assignment label across all dates
+    all_assignments = []
+    for task_list in assignments.values():
+        for task in task_list:
+            if task not in all_assignments:
+                all_assignments.append(task)
+
+    # --- ADDED: extract unique course names from assignments that follow "Course: Task" format ---
+    # A course name is the part before the first ": " in the label, if it exists
+    found_courses = sorted(set(
+        a.split(":")[0].strip() for a in all_assignments if ":" in a
+    ))
+
+    # --- ADDED: print the discovered course names before asking the yes/no question ---
     print("\n--- Assignment Weights ---")
+    if found_courses:
+        print("The following courses were found in your calendar:")
+        for course in found_courses:
+            print(f"  - {course}")
+    else:
+        print("No course-tagged assignments were found.")
+    # --- END ADDED ---
+
     while True:
-        add_weights = input("Do you want to add weights to any assignments? (yes/no): ").strip().lower()
+        add_weights = input("\nDo you want to add weights to any assignments? (yes/no): ").strip().lower()
         if add_weights in ["yes", "no", "y", "n"]:
             break
         print("Please enter yes or no.")
@@ -86,13 +107,6 @@ def collect_weights(assignments):
     # If no, return an empty dict (no weights for anything)
     if add_weights in ["no", "n"]:
         return {}
-
-    # Build a flat list of every unique assignment label across all dates
-    all_assignments = []
-    for task_list in assignments.values():
-        for task in task_list:
-            if task not in all_assignments:
-                all_assignments.append(task)
 
     # weight_map will store { assignment_label: weight_string }
     weight_map = {}
@@ -169,8 +183,9 @@ def main():
         print("Invalid layout. Please choose 1 or 2.")
 
     # File format preference
+    print("\n--- Export Format Options ---")
     while True:
-        format_choice = input("\nExport format? (csv/txt): ").lower()
+        format_choice = input("Export format? (csv/txt): ").lower()
         if format_choice in ["csv", "txt"]:
             break
         print("Invalid format. Please enter 'csv' or 'txt'.")
