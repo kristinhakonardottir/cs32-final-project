@@ -252,8 +252,6 @@ def main():
 
     filename = f"planner_{lang_choice}.{format_choice}"
 
-
-
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None
         current_day = start_date
