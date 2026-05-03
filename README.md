@@ -30,12 +30,12 @@ This project is a Python-based tool that connects up to five iCalendar feeds, pa
 I used Gemini to assist me while I developed this project. It helped me with:
 - The format_date_by_lang function
 - The get_grouped_assignments function
-- The collect_weights function
 - How the .ics file looks like, finding the keywords that signal the assignment name and date
 - How to use the urllib library
 - How to format the "spreadsheet" style and the "list" style
 - How to use the datetime library
 - Adding support for up to 5 URLs
+- Building the Streamlit web interface
 
 I wrote the indexing of assignments and dates, the print statements, and the user inputs myself. For the "if/else" statements, functions and the main function, I wrote the logic myself, then I prompted Gemini asking how to translate it into an efficient python code.
 
@@ -44,3 +44,4 @@ The code blocks Gemini wrote for me and I copied are:
 - The "getting data" from the URL using the "urllib" library in the "main" function
 - The date code in the format_date_by_lang function
 - The weight and file formatting in the "main" function
+- The entire StreamLit user interface
