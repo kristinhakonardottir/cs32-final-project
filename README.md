@@ -17,9 +17,9 @@ This project is a Python-based tool that connects up to five iCalendar feeds, pa
 
 
 ## Instructions for Running
-1. **Prerequisites**: No external libraries are required (uses standard libraries `urllib`, `csv`, `datetime`, `io`, `streamlit`).
+1. **Prerequisites**: Install these libraries if not already installed: `urllib`, `csv`, `datetime`, `io`, `streamlit`
 2. **Setup**:
-   - Save the script as `planner.py`.
+   - Save the script as planner.py
 3. **Execution**:
    - Open your terminal or IDE (like VS Code).
    - Run the command: `python planner.py`
