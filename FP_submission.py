@@ -252,8 +252,11 @@ def main():
 
     filename = f"planner_{lang_choice}.{format_choice}"
 
+
+
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None
+        current_day = start_date
         while current_day <= end_date:
             date_str = format_date_by_lang(current_day, lang_choice)
             tasks = assignments.get(current_day, [])
@@ -284,7 +287,7 @@ def main():
                 else:
                     f.write(f"{date_str}\n")
                     for t in tasks:
-                        weight = weight_map.get(t, "") 
+                        weight = weight_map.get(t, "")
                         weight_str = f" [{weight}]" if weight else ""
                         f.write(f"  {t}{weight_str}\n")
                     f.write("\n")
