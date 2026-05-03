@@ -39,7 +39,7 @@ I wrote the indexing of assignments and dates, the print statements, and the use
 
 The code blocks Gemini wrote for me and I copied are:
 - The LANG_DATA dictionary as it is more efficient for GAI to write such dictionary of dictionary with languages I don't speak (french and spanish)
-- The "getting data" from the URL using the "urllib" library
+- The "getting data" from the URL using the "urllib" library in the "main" function
 - The date code in the format_date_by_lang function
--
+- The weight and file formatting in the "main" function
 
