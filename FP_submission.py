@@ -22,9 +22,11 @@ LANG_DATA = {
     }
 }
 
-# The .ics file of the calendar
-URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics"
-# URL = "https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics"
+# The .ics file URL(s) are now entered interactively in main() — up to 5 are supported.
+# You can still paste your old URL(s) in when prompted.
+# Example URLs:
+# https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics
+# https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics
 
 
 def format_date_by_lang(dt, lang_code):
@@ -47,7 +49,7 @@ def format_date_by_lang(dt, lang_code):
 
     elif lang_code == "es":
         # ADDED: Spanish convention — day-of-week, day "de" month (no period after number)
-        return f"{day_name} {dt.day} de {month_name}"
+        return f"{day_name}, {dt.day} de {month_name}"
 
     elif lang_code == "fr":
         # ADDED: French convention — day-of-week + day + ordinal suffix + month
@@ -235,17 +237,48 @@ def main():
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
 
-    # Get data from URL
-    print(f"\nFetching calendar data...")
-    req = urllib.request.Request(URL, headers={'User-Agent': 'Mozilla/5.0'})
-    try:
-        with urllib.request.urlopen(req) as response:
-            raw_text = response.read().decode('utf-8')
-    except Exception as e:
-        print(f"Error fetching URL: {e}")
+    # --- ADDED: collect up to 5 ICS URLs from the user instead of using a hardcoded single URL ---
+    print("\n--- Calendar Sources ---")
+    print("Enter up to 5 .ics calendar URLs. Press Enter with no input when you are done.")
+    urls = []
+    for i in range(1, 6):
+        url_input = input(f"  ICS URL {i} (or press Enter to finish): ").strip()
+        if not url_input:
+            break
+        urls.append(url_input)
+
+    if not urls:
+        print("No URLs entered. Exiting.")
         return
 
-    assignments = get_grouped_assignments(raw_text)
+    # Fetch each URL and merge all events into one combined assignments dict
+    print(f"\nFetching calendar data from {len(urls)} source(s)...")
+    assignments = {}
+    for i, url in enumerate(urls, 1):
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        try:
+            with urllib.request.urlopen(req) as response:
+                raw_text = response.read().decode('utf-8')
+            print(f"  [{i}/{len(urls)}] OK — {url[:60]}{'...' if len(url) > 60 else ''}")
+        except Exception as e:
+            # If one URL fails, warn and skip it rather than aborting everything
+            print(f"  [{i}/{len(urls)}] Failed to fetch: {e}. Skipping.")
+            continue
+
+        # Merge this calendar's events into the combined dict
+        # ADDED: get_grouped_assignments is called once per URL and results are merged by date
+        partial = get_grouped_assignments(raw_text)
+        for day, tasks in partial.items():
+            if day not in assignments:
+                assignments[day] = []
+            for task in tasks:
+                if task not in assignments[day]:  # avoid duplicates if same event appears in two feeds
+                    assignments[day].append(task)
+
+    if not assignments:
+        print("No assignments found in any of the provided calendars.")
+        return
+    # --- END ADDED ---
 
     # --- ADDED: call weight collection after data is fetched ---
     weight_map = collect_weights(assignments)
@@ -254,7 +287,7 @@ def main():
     filename = f"planner_{lang_choice}.{format_choice}"
 
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.writer(f) if format_choice == "csv" else None
+        writer = csv.writer(f, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None  # CHANGED: QUOTE_NONE prevents commas in dates (e.g. Spanish) from being wrapped in double quotes
         current_day = start_date
         while current_day <= end_date:
             date_str = format_date_by_lang(current_day, lang_choice)
