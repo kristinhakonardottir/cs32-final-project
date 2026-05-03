@@ -11,17 +11,18 @@ This project is a Python-based tool that connects up to five iCalendar feeds, pa
 - **Choose the layout** as either a horizontal "spreadsheet" style or a vertical "list" style.
 - **Choose the file export format** as either `.csv` (for Excel/Google Sheets) or `.txt` files.
 - **Get a continuous timeline** by generating a row for every single calendar day, providing space for manual entries on days without assignments.
+- **Add up to 5 iCalendar feed URLs** so assignments from multiple calendars (e.g. Canvas and Google Calendar) are merged into one planner.
+- **Add weights to assignments** per course so each task can be labeled with its grade weight (e.g. [20%]) in the exported file.
 
 
 ## Instructions for Running
 1. **Prerequisites**: No external libraries are required (uses standard libraries `urllib`, `csv`, and `datetime`).
 2. **Setup**:
    - Save the script as `planner.py`.
-   - Paste the iCalendar feed into the URL variable
 3. **Execution**:
    - Open your terminal or IDE (like VS Code).
    - Run the command: `python planner.py`
-4. **Configuration**: Follow the on-screen prompts to select your language, layout, and file format.
+4. **Configuration**: Follow the on-screen prompts to select your language, layout, file format, date range, calendar URLs, and optional assigment weights.
 5. **Output**: The script will generate a file named `planner_[lang].csv` or `planner_[lang].txt` in the same directory.
 
 ### Generative AI Disclosure
