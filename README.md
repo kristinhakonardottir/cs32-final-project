@@ -13,6 +13,7 @@ This project is a Python-based tool that connects up to five iCalendar feeds, pa
 - **Get a continuous timeline** by generating a row for every single calendar day, providing space for manual entries on days without assignments.
 - **Add up to 5 iCalendar feed URLs** so assignments from multiple calendars (e.g. Canvas and Google Calendar) are merged into one planner.
 - **Add weights to assignments** per course so each task can be labeled with its grade weight (e.g. [20%]) in the exported file.
+- **Use a web-based GUI** through a Streamlit interface that runs in the browser, no terminal prompts required.
 
 
 ## Instructions for Running
