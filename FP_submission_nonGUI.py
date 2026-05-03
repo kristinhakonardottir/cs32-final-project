@@ -27,9 +27,9 @@ def format_date_by_lang(dt, lang_code):
     """Formats a Python date object into a string based on the selected language.
     Each language uses its own conventional date order and punctuation:
       is: mánudagur 1. janúar
-      es: lunes, 1 de enero
-      fr: lundi 1er janvier  (only the 1st gets 'er', all other days are plain numbers)
-      en: Monday, January 1
+      es: lunes 1 de enero
+      fr: lundi 1er janvier
+      en: Monday January 1
     """
 
     lang = LANG_DATA[lang_code]
@@ -40,14 +40,14 @@ def format_date_by_lang(dt, lang_code):
         return f"{day_name} {dt.day}. {month_name}"
 
     elif lang_code == "es":
-        return f"{day_name}, {dt.day} de {month_name}"
+        return f"{day_name} {dt.day} de {month_name}"
 
     elif lang_code == "fr":
         ordinal = "er" if dt.day == 1 else ""
         return f"{day_name} {dt.day}{ordinal} {month_name}"
 
     elif lang_code == "en":
-        return f"{day_name}, {month_name} {dt.day}"
+        return f"{day_name} {month_name} {dt.day}"
 
 def get_grouped_assignments(raw_text):
 
