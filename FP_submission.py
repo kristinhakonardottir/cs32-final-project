@@ -22,13 +22,6 @@ LANG_DATA = {
     }
 }
 
-# The .ics file URL(s) are now entered interactively in main() — up to 5 are supported.
-# You can still paste your old URL(s) in when prompted.
-# Example URLs:
-# https://calendar.google.com/calendar/ical/a4j4vao234ts6a37q16lctup0k%40group.calendar.google.com/public/basic.ics
-# https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScSjCBFTuHYcdNf8W1.ics
-
-
 def format_date_by_lang(dt, lang_code):
 
     """Formats a Python date object into a string based on the selected language.
@@ -44,21 +37,16 @@ def format_date_by_lang(dt, lang_code):
     month_name = lang["months"][dt.month]
 
     if lang_code == "is":
-        # UNCHANGED: day-of-week + day number with period + month
         return f"{day_name} {dt.day}. {month_name}"
 
     elif lang_code == "es":
-        # ADDED: Spanish convention — day-of-week, day "de" month (no period after number)
         return f"{day_name}, {dt.day} de {month_name}"
 
     elif lang_code == "fr":
-        # ADDED: French convention — day-of-week + day + ordinal suffix + month
-        # Only the 1st uses "er" (premier); all other days are plain numbers
         ordinal = "er" if dt.day == 1 else ""
         return f"{day_name} {dt.day}{ordinal} {month_name}"
 
     elif lang_code == "en":
-        # ADDED: English convention — day-of-week, month day (month comes before the number)
         return f"{day_name}, {month_name} {dt.day}"
 
 def get_grouped_assignments(raw_text):
@@ -88,31 +76,22 @@ def get_grouped_assignments(raw_text):
     return grouped_data
 
 
-# --- ADDED: collects weight assignments from the user per course ---
-# Takes the full assignments dict (keyed by date) and returns a
-# nested dict: { assignment_label: weight_string }
-# Only assignments whose label starts with "<CourseName>:" are shown.
-# The user can enter "n" to skip an assignment or a number to set its weight.
 def collect_weights(assignments):
 
     """Asks the user if they want to add weights to any assignments.
     Loops through courses and assignments until the user is done.
     Returns a dict mapping assignment label -> weight string (or None)."""
 
-    # Build a flat list of every unique assignment label across all dates
     all_assignments = []
     for task_list in assignments.values():
         for task in task_list:
             if task not in all_assignments:
                 all_assignments.append(task)
 
-    # --- ADDED: extract unique course names from assignments that follow "Course: Task" format ---
-    # A course name is the part before the first ": " in the label, if it exists
     found_courses = sorted(set(
         a.split(":")[0].strip() for a in all_assignments if ":" in a
     ))
 
-    # --- ADDED: print the discovered course names before asking the yes/no question ---
     print("\n--- Assignment Weights ---")
     if found_courses:
         print("The following courses were found in your calendar:")
