@@ -47,7 +47,7 @@ def format_date_by_lang(dt, lang_code):
 
     elif lang_code == "es":
         # ADDED: Spanish convention — day-of-week, day "de" month (no period after number)
-        return f"{day_name}, {dt.day} de {month_name}"
+        return f"{day_name} {dt.day} de {month_name}"
 
     elif lang_code == "fr":
         # ADDED: French convention — day-of-week + day + ordinal suffix + month
