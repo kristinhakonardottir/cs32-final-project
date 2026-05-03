@@ -29,13 +29,35 @@ URL = "https://canvas.harvard.edu/feeds/calendars/user_NOQogScFrdtBPeSdI1gIbpScS
 
 def format_date_by_lang(dt, lang_code):
 
-    """Formats a Python date object into
-    a string based on the selected language."""
+    """Formats a Python date object into a string based on the selected language.
+    Each language uses its own conventional date order and punctuation:
+      is: mánudagur 1. janúar
+      es: lunes, 1 de enero
+      fr: lundi 1er janvier  (only the 1st gets 'er', all other days are plain numbers)
+      en: Monday, January 1
+    """
 
     lang = LANG_DATA[lang_code]
     day_name = lang["days"][dt.strftime("%A")]
     month_name = lang["months"][dt.month]
-    return f"{day_name} {dt.day}. {month_name}"
+
+    if lang_code == "is":
+        # UNCHANGED: day-of-week + day number with period + month
+        return f"{day_name} {dt.day}. {month_name}"
+
+    elif lang_code == "es":
+        # ADDED: Spanish convention — day-of-week, day "de" month (no period after number)
+        return f"{day_name}, {dt.day} de {month_name}"
+
+    elif lang_code == "fr":
+        # ADDED: French convention — day-of-week + day + ordinal suffix + month
+        # Only the 1st uses "er" (premier); all other days are plain numbers
+        ordinal = "er" if dt.day == 1 else ""
+        return f"{day_name} {dt.day}{ordinal} {month_name}"
+
+    elif lang_code == "en":
+        # ADDED: English convention — day-of-week, month day (month comes before the number)
+        return f"{day_name}, {month_name} {dt.day}"
 
 def get_grouped_assignments(raw_text):
 
@@ -183,9 +205,8 @@ def main():
         print("Invalid layout. Please choose 1 or 2.")
 
     # File format preference
-    print("\n--- Export Format Options ---")
     while True:
-        format_choice = input("Export format? (csv/txt): ").lower()
+        format_choice = input("\nExport format? (csv/txt): ").lower()
         if format_choice in ["csv", "txt"]:
             break
         print("Invalid format. Please enter 'csv' or 'txt'.")
