@@ -19,12 +19,12 @@ This project is a Python-based tool that connects up to five iCalendar feeds, pa
 ## Instructions for Running
 1. **Prerequisites**: Install these libraries if not already installed: `urllib`, `csv`, `datetime`, `io`, `streamlit`
 2. **Setup**:
-   - Save the script as planner.py
+   - Save the script "FP_submission.py"
 3. **Execution**:
    - Open your terminal or IDE (like VS Code).
-   - Run the command: `python planner.py`
-4. **Configuration**: Follow the on-screen prompts to select your language, layout, file format, date range, calendar URLs, and optional assigment weights.
-5. **Output**: The script will generate a file named `planner_[lang].csv` or `planner_[lang].txt` in the same directory.
+   - Run the command: `streamlit run FP_submission.py`
+4. **Configuration**: A browser tab will open automatically. Fill in your preferences using the dropdown menus and date pickers, paste your calendar URLs click Fetch Calendar Data, optionally add weights using the course expanders, and click Download to get your file.
+5. **Output**: The file is downloaded directly to your browser.
 
 ### Generative AI Disclosure
 I used Gemini to assist me while I developed this project. It helped me with:
