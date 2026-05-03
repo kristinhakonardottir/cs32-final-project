@@ -1,4 +1,4 @@
-# cs32-final-project: Semester Assignment Planner
+# cs32-final-project: Semester Planner
 
 ## Motivation
 
