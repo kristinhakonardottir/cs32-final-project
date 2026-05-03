@@ -118,7 +118,7 @@ def build_planner_bytes(format_choice, layout_choice, lang_choice,
                 for t in tasks:
                     weight = weight_map.get(t, "")
                     weight_str = f" [{weight}]" if weight else ""
-                    output.write(f"  {t}{weight_str}\n")
+                    output.write(f"{t}{weight_str}\n")
                 output.write("\n")
 
         current_day += timedelta(days=1)
