@@ -1,6 +1,11 @@
 import urllib.request
 import csv
+import io
 from datetime import date, timedelta
+import streamlit as st
+
+# Page configuration
+st.set_page_config(page_title="Semester Planner", page_icon="📅", layout="centered")
 
 # Dictionaries (is/es/fr/en) of dictionaries (translations of months and days)
 LANG_DATA = {
@@ -22,8 +27,8 @@ LANG_DATA = {
     }
 }
 
-def format_date_by_lang(dt, lang_code):
 
+def format_date_by_lang(dt, lang_code):
     """Formats a Python date object into a string based on the selected language.
     Each language uses its own conventional date order and punctuation:
       is: mánudagur 1. janúar
@@ -35,17 +40,13 @@ def format_date_by_lang(dt, lang_code):
     lang = LANG_DATA[lang_code]
     day_name = lang["days"][dt.strftime("%A")]
     month_name = lang["months"][dt.month]
-
     if lang_code == "is":
         return f"{day_name} {dt.day}. {month_name}"
-
     elif lang_code == "es":
         return f"{day_name}, {dt.day} de {month_name}"
-
     elif lang_code == "fr":
         ordinal = "er" if dt.day == 1 else ""
         return f"{day_name} {dt.day}{ordinal} {month_name}"
-
     elif lang_code == "en":
         return f"{day_name}, {month_name} {dt.day}"
 
@@ -75,13 +76,163 @@ def get_grouped_assignments(raw_text):
                 continue
     return grouped_data
 
+def build_planner_bytes(format_choice, layout_choice, lang_choice,
+                        start_date, end_date, assignments, weight_map):
 
-def collect_weights(assignments):
+    """Same file-writing logic as earlier versions, but writes to a bytes buffer
+    instead of a file so Streamlit can offer it as a download."""
 
-    """Asks the user if they want to add weights to any assignments.
-    Loops through courses and assignments until the user is done.
-    Returns a dict mapping assignment label -> weight string (or None)."""
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None
 
+    current_day = start_date
+    while current_day <= end_date:
+        date_str = format_date_by_lang(current_day, lang_choice)
+        tasks = assignments.get(current_day, [])
+
+        if format_choice == "csv":
+            if layout_choice == "1":
+                if not tasks:
+                    writer.writerow([date_str, ""])
+                for task in tasks:
+                    weight = weight_map.get(task, "")
+                    task_str = f"{task} [{weight}]" if weight else task
+                    writer.writerow([date_str, task_str])
+            else:
+                writer.writerow([date_str])
+                for task in tasks:
+                    weight = weight_map.get(task, "")
+                    task_str = f"{task} [{weight}]" if weight else task
+                    writer.writerow([task_str])
+                writer.writerow([])
+        else:
+            if layout_choice == "1":
+                task_parts = []
+                for task in tasks:
+                    weight = weight_map.get(task, "")
+                    task_parts.append(f"{task} [{weight}]" if weight else task)
+                tasks_text = "\t".join(task_parts) if task_parts else ""
+                output.write(f"{date_str}\t{tasks_text}\n")
+            else:
+                output.write(f"{date_str}\n")
+                for t in tasks:
+                    weight = weight_map.get(t, "")
+                    weight_str = f" [{weight}]" if weight else ""
+                    output.write(f"  {t}{weight_str}\n")
+                output.write("\n")
+
+        current_day += timedelta(days=1)
+
+    return output.getvalue().encode("utf-8-sig")
+
+# Streamlit UI
+
+st.title("📅 Semester Planner")
+st.caption("Connect your calendar, choose your preferences, and download your planner.")
+
+# Streamlit reruns top to bottom on every interaction, so we use
+# st.session_state to remember things across reruns (fetched assignments, etc.)
+if "assignments" not in st.session_state:
+    st.session_state.assignments = None
+if "fetch_errors" not in st.session_state:
+    st.session_state.fetch_errors = []
+
+# Section 1: Preferences
+st.subheader("1 · Preferences")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    lang_choice = st.radio(
+        "Language",
+        options=["en", "is", "es", "fr"],
+        format_func=lambda x: {"en": "English", "is": "Íslenska", "es": "Español", "fr": "Français"}[x],
+    )
+
+with col2:
+    layout_choice = st.radio(
+        "Layout",
+        options=["1", "2"],
+        format_func=lambda x: "Standard (same row)" if x == "1" else "Grouped (date then tasks)",
+    )
+
+with col3:
+    format_choice = st.radio(
+        "Export format",
+        options=["csv", "txt"],
+        format_func=lambda x: ".csv  (Excel / Sheets)" if x == "csv" else ".txt  (Notes app)",
+    )
+
+# Section 2: Date Range
+st.subheader("2 · Date Range")
+
+col_s, col_e = st.columns(2)
+with col_s:
+    start_date = st.date_input("Start date", value=date.today())
+with col_e:
+    end_date = st.date_input("End date", value=date(date.today().year, 12, 31))
+
+if end_date < start_date:
+    st.error("End date cannot be before start date.")
+    st.stop()
+
+# Section 3: Calendar URLs
+st.subheader("3 · Calendar URLs")
+st.caption("Paste up to 5 .ics feed URLs. Leave unused fields blank.")
+
+url_entries = []
+for i in range(5):
+    url = st.text_input(f"URL {i+1}", key=f"url_{i}", placeholder="https://calendar.google.com/calendar/ical/...")
+    if url.strip():
+        url_entries.append(url.strip())
+
+# Fetch button
+st.divider()
+
+if st.button("📥  Fetch Calendar Data", type="primary", use_container_width=True):
+    if not url_entries:
+        st.error("Please enter at least one calendar URL.")
+    else:
+        assignments = {}
+        errors = []
+        progress = st.progress(0, text="Starting…")
+
+        for i, url in enumerate(url_entries):
+            progress.progress((i) / len(url_entries), text=f"Fetching source {i+1} of {len(url_entries)}…")
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            try:
+                with urllib.request.urlopen(req) as resp:
+                    raw_text = resp.read().decode("utf-8")
+                partial = get_grouped_assignments(raw_text)
+                for day, tasks in partial.items():
+                    if day not in assignments:
+                        assignments[day] = []
+                    for task in tasks:
+                        if task not in assignments[day]:
+                            assignments[day].append(task)
+            except Exception as e:
+                errors.append(f"URL {i+1}: {e}")
+
+        progress.progress(1.0, text="Done!")
+
+        st.session_state.assignments = assignments
+        st.session_state.fetch_errors = errors
+
+        if errors:
+            for err in errors:
+                st.warning(f"Could not fetch — {err}")
+
+        if assignments:
+            total = sum(len(v) for v in assignments.values())
+            st.success(f"✓ Fetched {total} assignment(s) across {len(assignments)} day(s).")
+        else:
+            st.error("No assignments found. Check your URLs.")
+
+# Section 4: Weights (shown only after a successful fetch)
+if st.session_state.assignments:
+    assignments = st.session_state.assignments
+
+    # Build flat unique assignment list and course names
     all_assignments = []
     for task_list in assignments.values():
         for task in task_list:
@@ -92,206 +243,68 @@ def collect_weights(assignments):
         a.split(":")[0].strip() for a in all_assignments if ":" in a
     ))
 
-    print("\n--- Assignment Weights ---")
-    if found_courses:
-        print("The following courses were found in your calendar:")
-        for course in found_courses:
-            print(f"  - {course}")
-    else:
-        print("No course-tagged assignments were found.")
+    st.subheader("4 · Assignment Weights  *(optional)*")
 
-    while True:
-        add_weights = input("\nDo you want to add weights to any assignments? (yes/no): ").strip().lower()
-        if add_weights in ["yes", "no", "y", "n"]:
-            break
-        print("Please enter yes or no.")
-
-    if add_weights in ["no", "n"]:
-        return {}
-
+    add_weights = st.toggle("Add weights to assignments")
     weight_map = {}
 
-    while True:
-        course_name = input("\nEnter the course name to add weights for (or 'done' to finish): ").strip()
+    if add_weights:
+        if not found_courses:
+            st.info("No course-tagged assignments found in your calendar.")
+        else:
+            st.caption("Enter a weight (e.g. 20% or 0.2) next to each assignment. Leave blank to skip.")
 
-        if course_name.lower() == "done":
-            break
+            for course in found_courses:
+                with st.expander(f"📚 {course}", expanded=True):
+                    course_assignments = [
+                        a for a in all_assignments
+                        if a.lower().startswith(course.lower() + ":")
+                    ]
+                    for assignment in course_assignments:
+                        display = assignment.split(":", 1)[1].strip() if ":" in assignment else assignment
+                        col_a, col_w = st.columns([3, 1])
+                        with col_a:
+                            st.markdown(f"<small>{display}</small>", unsafe_allow_html=True)
+                        with col_w:
+                            val = st.text_input(
+                                "Weight",
+                                key=f"w_{assignment}",
+                                placeholder="e.g. 20%",
+                                label_visibility="collapsed",
+                            )
+                        if val.strip():
+                            try:
+                                float(val.strip().replace("%", ""))
+                                weight_map[assignment] = val.strip()
+                            except ValueError:
+                                st.error(f'"{val}" is not a valid weight for: {display}')
 
-        course_assignments = [a for a in all_assignments if a.lower().startswith(course_name.lower() + ":")]
-
-        if not course_assignments:
-            print(f"  No assignments found for course '{course_name}'. Check the spelling.")
-            continue
-
-        print(f"  Found {len(course_assignments)} assignment(s) for '{course_name}'.")
-        print("  For each assignment, enter a weight (e.g. 0.2 or 20%) or 'n' to skip.\n")
-
-        for assignment in course_assignments:
-            while True:
-                weight_input = input(f"  {assignment}\n  Weight (or n to skip): ").strip()
-
-                if weight_input.lower() == "n":
-                    break
-
-                try:
-                    cleaned = weight_input.replace("%", "").strip()
-                    float(cleaned)
-                    weight_map[assignment] = weight_input
-                    break
-                except ValueError:
-                    print("  Invalid input. Enter a number (e.g. 0.2 or 20%) or 'n' to skip.")
-
-        while True:
-            another = input("\nAdd weights for another course? (yes/no): ").strip().lower()
-            if another in ["yes", "no", "y", "n"]:
-                break
-            print("Please enter yes or no.")
-
-        if another in ["no", "n"]:
-            break
-
-    return weight_map
-
-
-def main():
-    print("--- Configuration Preferences of the Planner---")
-
-    # Language preference
-    while True:
-        lang_choice = input("Select language (is/es/fr/en): ").lower()
-        if lang_choice in LANG_DATA:
-            break
-        print("Invalid language. Please choose from is, es, fr, or en.")
-
-    # Layout preference
-    print("\n--- Layout Options ---")
-    print("1: Standard (Date and Task on same row)")
-    print("2: Grouped (Date row, Task row below, extra spacing)")
-    while True:
-        layout_choice = input("Select layout (1 or 2): ")
-        if layout_choice in ["1", "2"]:
-            break
-        print("Invalid layout. Please choose 1 or 2.")
-
-    # File format preference
-    print("\n--- Export Format Options ---")
-    while True:
-        format_choice = input("Export format? (csv/txt): ").lower()
-        if format_choice in ["csv", "txt"]:
-            break
-        print("Invalid format. Please enter 'csv' or 'txt'.")
-
-    # Start date preference
-    print("\n--- Date Range ---")
-    while True:
-        try:
-            start_input = input("Enter start date (YYYY-MM-DD): ")
-            sy, sm, sd = map(int, start_input.split("-"))
-            start_date = date(sy, sm, sd)
-            break
-        except ValueError:
-            print("Invalid date format. Please use YYYY-MM-DD.")
-
-    # End date preference
-    while True:
-        try:
-            end_input = input("Enter end date (YYYY-MM-DD): ")
-            ey, em, ed = map(int, end_input.split("-"))
-            end_date = date(ey, em, ed)
-            if end_date < start_date:
-                print("End date cannot be before start date.")
-                continue
-            break
-        except ValueError:
-            print("Invalid date format. Please use YYYY-MM-DD.")
-
-    # Collect up to 5 ICS URLs from the user
-    print("\n--- Calendar Sources ---")
-    print("Enter up to 5 .ics calendar URLs. Press Enter with no input when you are done.")
-    urls = []
-    for i in range(1, 6):
-        url_input = input(f"  ICS URL {i} (or press Enter to finish): ").strip()
-        if not url_input:
-            break
-        urls.append(url_input)
-
-    if not urls:
-        print("No URLs entered. Exiting.")
-        return
-
-    # Fetch each URL and merge all events into one combined assignments dict
-    print(f"\nFetching calendar data from {len(urls)} source(s)...")
-    assignments = {}
-    for i, url in enumerate(urls, 1):
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        try:
-            with urllib.request.urlopen(req) as response:
-                raw_text = response.read().decode('utf-8')
-            print(f"  [{i}/{len(urls)}] OK — {url[:60]}{'...' if len(url) > 60 else ''}")
-        except Exception as e:
-            # If one URL fails, warn and skip it rather than aborting everything
-            print(f"  [{i}/{len(urls)}] Failed to fetch: {e}. Skipping.")
-            continue
-
-        # Merge this calendar's events into the combined dict
-        # get_grouped_assignments is called once per URL and results are merged by date
-        partial = get_grouped_assignments(raw_text)
-        for day, tasks in partial.items():
-            if day not in assignments:
-                assignments[day] = []
-            for task in tasks:
-                if task not in assignments[day]:  # avoid duplicates if same event appears in two feeds
-                    assignments[day].append(task)
-
-    if not assignments:
-        print("No assignments found in any of the provided calendars.")
-        return
-
-    # Call weight collection after data is fetched
-    weight_map = collect_weights(assignments)
+    # Generate & Download
+    st.divider()
+    st.subheader("5 · Generate & Download")
 
     filename = f"planner_{lang_choice}.{format_choice}"
+    mime = "text/csv" if format_choice == "csv" else "text/plain"
 
-    with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.writer(f, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None
-        current_day = start_date
-        while current_day <= end_date:
-            date_str = format_date_by_lang(current_day, lang_choice)
-            tasks = assignments.get(current_day, [])
+    try:
+        file_bytes = build_planner_bytes(
+            format_choice=format_choice,
+            layout_choice=layout_choice,
+            lang_choice=lang_choice,
+            start_date=start_date,
+            end_date=end_date,
+            assignments=assignments,
+            weight_map=weight_map,
+        )
 
-            if format_choice == "csv":
-                if layout_choice == "1":
-                    if not tasks: writer.writerow([date_str, ""])
-                    for task in tasks:
-                        weight = weight_map.get(task, "")  # look up weight for this task
-                        task_str = f"{task} [{weight}]" if weight else task  # weight now formatted in bracket inside task cell
-                        writer.writerow([date_str, task_str])
-                else:
-                    writer.writerow([date_str])
-                    for task in tasks:
-                        weight = weight_map.get(task, "")  # look up weight for this task
-                        task_str = f"{task} [{weight}]" if weight else task  # Cweight now formatted in bracket inside task cell
-                        writer.writerow([task_str])
-                    writer.writerow([])
-            else:
-                if layout_choice == "1":
-                    # build task strings that include weight if available, then join
-                    task_parts = []
-                    for task in tasks:
-                        weight = weight_map.get(task, "")
-                        task_parts.append(f"{task} [{weight}]" if weight else task)
-                    tasks_text = "\t".join(task_parts) if task_parts else ""
-                    f.write(f"{date_str}\t{tasks_text}\n")
-                else:
-                    f.write(f"{date_str}\n")
-                    for t in tasks:
-                        weight = weight_map.get(t, "")
-                        weight_str = f" [{weight}]" if weight else ""
-                        f.write(f"  {t}{weight_str}\n")
-                    f.write("\n")
-            current_day += timedelta(days=1)
+        st.download_button(
+            label=f"⬇️  Download {filename}",
+            data=file_bytes,
+            file_name=filename,
+            mime=mime,
+            type="primary",
+            use_container_width=True,
+        )
 
-    print(f"Success! Planner saved to {filename}")
-
-if __name__ == "__main__":
-    main()
+    except Exception as e:
+        st.error(f"Error generating file: {e}")
