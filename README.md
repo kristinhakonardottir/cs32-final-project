@@ -43,4 +43,3 @@ The code blocks Gemini wrote for me and I copied are:
 - The "getting data" from the URL using the "urllib" library in the "main" function
 - The date code in the format_date_by_lang function
 - The weight and file formatting in the "main" function
-
