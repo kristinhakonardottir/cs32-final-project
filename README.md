@@ -25,6 +25,7 @@ This project is a Python-based tool that connects up to five iCalendar feeds, pa
    - Run the command: `streamlit run FP_submission.py`
 4. **Configuration**: A browser tab will open automatically. Fill in your preferences using the dropdown menus and date pickers, paste your calendar URLs click Fetch Calendar Data, optionally add weights using the course expanders, and click Download to get your file.
 5. **Output**: The file is downloaded directly to your browser.
+6. **EXTRA**: If the user wants to use the terminal to put preferences, save the script "FP_submission_nonGUI.py" and run the command "python3 FP_submission_nonGUI.py"
 
 ### Generative AI Disclosure
 I used Gemini to assist me while I developed this project. It helped me with:
