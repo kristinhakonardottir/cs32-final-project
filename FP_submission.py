@@ -241,16 +241,17 @@ def main():
 
             if format_choice == "csv":
                 if layout_choice == "1":
-                    if not tasks: writer.writerow([date_str, "", ""])  # CHANGED: added empty weight column
+                    if not tasks: writer.writerow([date_str, ""])  # CHANGED: back to two columns
                     for task in tasks:
                         weight = weight_map.get(task, "")  # ADDED: look up weight for this task
-                        writer.writerow([date_str, task, weight])  # CHANGED: added weight as third column
+                        task_str = f"{task} [{weight}]" if weight else task  # CHANGED: weight now formatted in bracket inside task cell
+                        writer.writerow([date_str, task_str])  # CHANGED: back to two columns, weight is part of task string
                 else:
                     writer.writerow([date_str])
                     for task in tasks:
                         weight = weight_map.get(task, "")  # ADDED: look up weight for this task
-                        row = [task, weight] if weight else [task]  # ADDED: only append weight cell if it exists
-                        writer.writerow(row)  # CHANGED: was writer.writerow([task])
+                        task_str = f"{task} [{weight}]" if weight else task  # CHANGED: weight now formatted in bracket inside task cell
+                        writer.writerow([task_str])  # CHANGED: back to single cell, weight is part of task string
                     writer.writerow([])
             else:
                 if layout_choice == "1":
