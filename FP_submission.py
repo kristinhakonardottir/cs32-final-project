@@ -99,7 +99,6 @@ def collect_weights(assignments):
             print(f"  - {course}")
     else:
         print("No course-tagged assignments were found.")
-    # --- END ADDED ---
 
     while True:
         add_weights = input("\nDo you want to add weights to any assignments? (yes/no): ").strip().lower()
@@ -107,22 +106,17 @@ def collect_weights(assignments):
             break
         print("Please enter yes or no.")
 
-    # If no, return an empty dict (no weights for anything)
     if add_weights in ["no", "n"]:
         return {}
 
-    # weight_map will store { assignment_label: weight_string }
     weight_map = {}
 
-    # Keep asking for courses until the user says no
     while True:
         course_name = input("\nEnter the course name to add weights for (or 'done' to finish): ").strip()
 
         if course_name.lower() == "done":
             break
 
-        # Filter assignments that belong to this course.
-        # Since get_grouped_assignments flips to "Course: Task", we check prefix.
         course_assignments = [a for a in all_assignments if a.lower().startswith(course_name.lower() + ":")]
 
         if not course_assignments:
@@ -132,26 +126,21 @@ def collect_weights(assignments):
         print(f"  Found {len(course_assignments)} assignment(s) for '{course_name}'.")
         print("  For each assignment, enter a weight (e.g. 0.2 or 20%) or 'n' to skip.\n")
 
-        # Loop through each assignment in that course one by one
         for assignment in course_assignments:
             while True:
                 weight_input = input(f"  {assignment}\n  Weight (or n to skip): ").strip()
 
                 if weight_input.lower() == "n":
-                    # User skipped — no weight stored for this assignment
                     break
 
-                # Validate: accept a plain number or a percentage string
                 try:
-                    # Strip % if the user typed something like "20%"
                     cleaned = weight_input.replace("%", "").strip()
-                    float(cleaned)  # just validate it's a number; store original string
+                    float(cleaned)
                     weight_map[assignment] = weight_input
                     break
                 except ValueError:
                     print("  Invalid input. Enter a number (e.g. 0.2 or 20%) or 'n' to skip.")
 
-        # Ask if the user wants to add weights for another course
         while True:
             another = input("\nAdd weights for another course? (yes/no): ").strip().lower()
             if another in ["yes", "no", "y", "n"]:
@@ -162,7 +151,6 @@ def collect_weights(assignments):
             break
 
     return weight_map
-# --- END ADDED ---
 
 
 def main():
@@ -186,8 +174,9 @@ def main():
         print("Invalid layout. Please choose 1 or 2.")
 
     # File format preference
+    print("\n--- Export Format Options ---")
     while True:
-        format_choice = input("\nExport format? (csv/txt): ").lower()
+        format_choice = input("Export format? (csv/txt): ").lower()
         if format_choice in ["csv", "txt"]:
             break
         print("Invalid format. Please enter 'csv' or 'txt'.")
@@ -216,7 +205,7 @@ def main():
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
 
-    # --- ADDED: collect up to 5 ICS URLs from the user instead of using a hardcoded single URL ---
+    # Collect up to 5 ICS URLs from the user
     print("\n--- Calendar Sources ---")
     print("Enter up to 5 .ics calendar URLs. Press Enter with no input when you are done.")
     urls = []
@@ -245,7 +234,7 @@ def main():
             continue
 
         # Merge this calendar's events into the combined dict
-        # ADDED: get_grouped_assignments is called once per URL and results are merged by date
+        # get_grouped_assignments is called once per URL and results are merged by date
         partial = get_grouped_assignments(raw_text)
         for day, tasks in partial.items():
             if day not in assignments:
@@ -257,50 +246,47 @@ def main():
     if not assignments:
         print("No assignments found in any of the provided calendars.")
         return
-    # --- END ADDED ---
 
-    # --- ADDED: call weight collection after data is fetched ---
+    # Call weight collection after data is fetched
     weight_map = collect_weights(assignments)
-    # --- END ADDED ---
 
     filename = f"planner_{lang_choice}.{format_choice}"
 
     with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.writer(f, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None  # CHANGED: QUOTE_NONE prevents commas in dates (e.g. Spanish) from being wrapped in double quotes
-        current_day = start_date
+        writer = csv.writer(f, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None
         while current_day <= end_date:
             date_str = format_date_by_lang(current_day, lang_choice)
             tasks = assignments.get(current_day, [])
 
             if format_choice == "csv":
                 if layout_choice == "1":
-                    if not tasks: writer.writerow([date_str, ""])  # CHANGED: back to two columns
+                    if not tasks: writer.writerow([date_str, ""])
                     for task in tasks:
-                        weight = weight_map.get(task, "")  # ADDED: look up weight for this task
-                        task_str = f"{task} [{weight}]" if weight else task  # CHANGED: weight now formatted in bracket inside task cell
-                        writer.writerow([date_str, task_str])  # CHANGED: back to two columns, weight is part of task string
+                        weight = weight_map.get(task, "")  # look up weight for this task
+                        task_str = f"{task} [{weight}]" if weight else task  # weight now formatted in bracket inside task cell
+                        writer.writerow([date_str, task_str])
                 else:
                     writer.writerow([date_str])
                     for task in tasks:
-                        weight = weight_map.get(task, "")  # ADDED: look up weight for this task
-                        task_str = f"{task} [{weight}]" if weight else task  # CHANGED: weight now formatted in bracket inside task cell
-                        writer.writerow([task_str])  # CHANGED: back to single cell, weight is part of task string
+                        weight = weight_map.get(task, "")  # look up weight for this task
+                        task_str = f"{task} [{weight}]" if weight else task  # Cweight now formatted in bracket inside task cell
+                        writer.writerow([task_str])
                     writer.writerow([])
             else:
                 if layout_choice == "1":
-                    # CHANGED: build task strings that include weight if available, then join
+                    # build task strings that include weight if available, then join
                     task_parts = []
                     for task in tasks:
-                        weight = weight_map.get(task, "")  # ADDED
-                        task_parts.append(f"{task} [{weight}]" if weight else task)  # ADDED
-                    tasks_text = "\t".join(task_parts) if task_parts else ""  # CHANGED: was "\t".join(tasks)
+                        weight = weight_map.get(task, "")
+                        task_parts.append(f"{task} [{weight}]" if weight else task)
+                    tasks_text = "\t".join(task_parts) if task_parts else ""
                     f.write(f"{date_str}\t{tasks_text}\n")
                 else:
                     f.write(f"{date_str}\n")
                     for t in tasks:
-                        weight = weight_map.get(t, "")  # ADDED: look up weight
-                        weight_str = f" [{weight}]" if weight else ""  # ADDED: format it
-                        f.write(f"  {t}{weight_str}\n")  # CHANGED: was f.write(f"  {t}\n")
+                        weight = weight_map.get(t, "") 
+                        weight_str = f" [{weight}]" if weight else ""
+                        f.write(f"  {t}{weight_str}\n")
                     f.write("\n")
             current_day += timedelta(days=1)
 
