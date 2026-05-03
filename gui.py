@@ -1,13 +1,11 @@
 import urllib.request
 import csv
-import threading
+import io
 from datetime import date, timedelta
-import customtkinter as ctk
-from tkinter import messagebox
+import streamlit as st
 
-# ── appearance ────────────────────────────────────────────────────────────────
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
+# ── page config ───────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Semester Planner", page_icon="📅", layout="centered")
 
 # ── language data (unchanged) ─────────────────────────────────────────────────
 LANG_DATA = {
@@ -67,295 +65,127 @@ def get_grouped_assignments(raw_text):
                 continue
     return grouped_data
 
-def write_planner(filename, format_choice, layout_choice, lang_choice,
-                  start_date, end_date, assignments, weight_map):
-    """Unchanged file-writing logic from the original script."""
+def build_planner_bytes(format_choice, layout_choice, lang_choice,
+                        start_date, end_date, assignments, weight_map):
+    """Same file-writing logic as original, but writes to a bytes buffer
+    instead of a file so Streamlit can offer it as a download."""
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None
+
     current_day = start_date
-    with open(filename, 'w', encoding='utf-8-sig', newline='') as f:
-        writer = csv.writer(f, quoting=csv.QUOTE_NONE, escapechar="\\") if format_choice == "csv" else None
-        while current_day <= end_date:
-            date_str = format_date_by_lang(current_day, lang_choice)
-            tasks = assignments.get(current_day, [])
+    while current_day <= end_date:
+        date_str = format_date_by_lang(current_day, lang_choice)
+        tasks = assignments.get(current_day, [])
 
-            if format_choice == "csv":
-                if layout_choice == "1":
-                    if not tasks:
-                        writer.writerow([date_str, ""])
-                    for task in tasks:
-                        weight = weight_map.get(task, "")
-                        task_str = f"{task} [{weight}]" if weight else task
-                        writer.writerow([date_str, task_str])
-                else:
-                    writer.writerow([date_str])
-                    for task in tasks:
-                        weight = weight_map.get(task, "")
-                        task_str = f"{task} [{weight}]" if weight else task
-                        writer.writerow([task_str])
-                    writer.writerow([])
+        if format_choice == "csv":
+            if layout_choice == "1":
+                if not tasks:
+                    writer.writerow([date_str, ""])
+                for task in tasks:
+                    weight = weight_map.get(task, "")
+                    task_str = f"{task} [{weight}]" if weight else task
+                    writer.writerow([date_str, task_str])
             else:
-                if layout_choice == "1":
-                    task_parts = []
-                    for task in tasks:
-                        weight = weight_map.get(task, "")
-                        task_parts.append(f"{task} [{weight}]" if weight else task)
-                    tasks_text = "\t".join(task_parts) if task_parts else ""
-                    f.write(f"{date_str}\t{tasks_text}\n")
-                else:
-                    f.write(f"{date_str}\n")
-                    for t in tasks:
-                        weight = weight_map.get(t, "")
-                        weight_str = f" [{weight}]" if weight else ""
-                        f.write(f"  {t}{weight_str}\n")
-                    f.write("\n")
-            current_day += timedelta(days=1)
+                writer.writerow([date_str])
+                for task in tasks:
+                    weight = weight_map.get(task, "")
+                    task_str = f"{task} [{weight}]" if weight else task
+                    writer.writerow([task_str])
+                writer.writerow([])
+        else:
+            if layout_choice == "1":
+                task_parts = []
+                for task in tasks:
+                    weight = weight_map.get(task, "")
+                    task_parts.append(f"{task} [{weight}]" if weight else task)
+                tasks_text = "\t".join(task_parts) if task_parts else ""
+                output.write(f"{date_str}\t{tasks_text}\n")
+            else:
+                output.write(f"{date_str}\n")
+                for t in tasks:
+                    weight = weight_map.get(t, "")
+                    weight_str = f" [{weight}]" if weight else ""
+                    output.write(f"  {t}{weight_str}\n")
+                output.write("\n")
 
-# ── Weight Window ─────────────────────────────────────────────────────────────
+        current_day += timedelta(days=1)
 
-class WeightWindow(ctk.CTkToplevel):
-    """Second window: shown after fetching, lets user enter weights per assignment."""
+    return output.getvalue().encode("utf-8-sig")
 
-    def __init__(self, parent, assignments, on_done):
-        super().__init__(parent)
-        self.title("Assignment Weights")
-        self.geometry("620x560")
-        self.resizable(False, False)
-        self.grab_set()  # make it modal
+# ── Streamlit UI ──────────────────────────────────────────────────────────────
 
-        self.on_done = on_done  # callback to call with the finished weight_map
+st.title("📅 Semester Planner")
+st.caption("Connect your calendar, choose your preferences, and download your planner.")
 
-        # Build flat unique assignment list and extract course names (same logic as original)
-        self.all_assignments = []
-        for task_list in assignments.values():
-            for task in task_list:
-                if task not in self.all_assignments:
-                    self.all_assignments.append(task)
+# Streamlit reruns top to bottom on every interaction, so we use
+# st.session_state to remember things across reruns (fetched assignments, etc.)
+if "assignments" not in st.session_state:
+    st.session_state.assignments = None
+if "fetch_errors" not in st.session_state:
+    st.session_state.fetch_errors = []
 
-        self.found_courses = sorted(set(
-            a.split(":")[0].strip() for a in self.all_assignments if ":" in a
-        ))
+# ── Section 1: Preferences ────────────────────────────────────────────────────
+st.subheader("1 · Preferences")
 
-        # weight_map stores { assignment_label: weight_string }
-        self.weight_map = {}
-        # entry widgets stored so we can read them on save: { assignment_label: CTkEntry }
-        self.weight_entries = {}
+col1, col2, col3 = st.columns(3)
 
-        self._build_ui()
+with col1:
+    lang_choice = st.radio(
+        "Language",
+        options=["en", "is", "es", "fr"],
+        format_func=lambda x: {"en": "English", "is": "Íslenska", "es": "Español", "fr": "Français"}[x],
+    )
 
-    def _build_ui(self):
-        # Title
-        ctk.CTkLabel(self, text="Assignment Weights",
-                     font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(18, 4))
-        ctk.CTkLabel(self, text="Leave a field blank to skip that assignment.",
-                     text_color="gray").pack(pady=(0, 10))
+with col2:
+    layout_choice = st.radio(
+        "Layout",
+        options=["1", "2"],
+        format_func=lambda x: "Standard (same row)" if x == "1" else "Grouped (date then tasks)",
+    )
 
-        if not self.found_courses:
-            ctk.CTkLabel(self, text="No course-tagged assignments found.",
-                         text_color="gray").pack(pady=20)
-            ctk.CTkButton(self, text="Continue →", command=self._save).pack(pady=10)
-            return
+with col3:
+    format_choice = st.radio(
+        "Export format",
+        options=["csv", "txt"],
+        format_func=lambda x: ".csv  (Excel / Sheets)" if x == "csv" else ".txt  (Notes app)",
+    )
 
-        # Scrollable area for all courses + their assignments
-        scroll = ctk.CTkScrollableFrame(self, width=570, height=390)
-        scroll.pack(padx=20, pady=(0, 10), fill="both", expand=True)
+# ── Section 2: Date Range ─────────────────────────────────────────────────────
+st.subheader("2 · Date Range")
 
-        for course in self.found_courses:
-            # Course header label
-            ctk.CTkLabel(scroll, text=course,
-                         font=ctk.CTkFont(size=13, weight="bold"),
-                         anchor="w").pack(fill="x", padx=8, pady=(12, 2))
+col_s, col_e = st.columns(2)
+with col_s:
+    start_date = st.date_input("Start date", value=date.today())
+with col_e:
+    end_date = st.date_input("End date", value=date(date.today().year, 12, 31))
 
-            course_assignments = [a for a in self.all_assignments
-                                  if a.lower().startswith(course.lower() + ":")]
+if end_date < start_date:
+    st.error("End date cannot be before start date.")
+    st.stop()
 
-            for assignment in course_assignments:
-                # Strip the "Course: " prefix for display to keep it short
-                display = assignment.split(":", 1)[1].strip() if ":" in assignment else assignment
+# ── Section 3: Calendar URLs ──────────────────────────────────────────────────
+st.subheader("3 · Calendar URLs")
+st.caption("Paste up to 5 .ics feed URLs. Leave unused fields blank.")
 
-                row = ctk.CTkFrame(scroll, fg_color="transparent")
-                row.pack(fill="x", padx=8, pady=2)
+url_entries = []
+for i in range(5):
+    url = st.text_input(f"URL {i+1}", key=f"url_{i}", placeholder="https://calendar.google.com/calendar/ical/...")
+    if url.strip():
+        url_entries.append(url.strip())
 
-                ctk.CTkLabel(row, text=display, anchor="w",
-                             wraplength=380).pack(side="left", fill="x", expand=True)
+# ── Fetch button ──────────────────────────────────────────────────────────────
+st.divider()
 
-                entry = ctk.CTkEntry(row, width=100, placeholder_text="e.g. 20%")
-                entry.pack(side="right", padx=(8, 0))
-                self.weight_entries[assignment] = entry
-
-        # Save button
-        ctk.CTkButton(self, text="Save Weights & Generate →",
-                      command=self._save, height=38).pack(pady=12)
-
-    def _save(self):
-        """Read all entry fields, validate, build weight_map, call on_done."""
-        weight_map = {}
-        errors = []
-
-        for assignment, entry in self.weight_entries.items():
-            val = entry.get().strip()
-            if not val:
-                continue  # blank = skip, same as typing "n" in the terminal version
-            try:
-                float(val.replace("%", "").strip())
-                weight_map[assignment] = val
-            except ValueError:
-                errors.append(f'"{val}" is not a valid weight for: {assignment[:50]}')
-
-        if errors:
-            messagebox.showerror("Invalid weights", "\n".join(errors), parent=self)
-            return
-
-        self.weight_map = weight_map
-        self.destroy()
-        self.on_done(weight_map)
-
-# ── Main Window ───────────────────────────────────────────────────────────────
-
-class PlannerApp(ctk.CTk):
-    """Main preference window — replaces all the input() prompts from the original."""
-
-    def __init__(self):
-        super().__init__()
-        self.title("Semester Planner")
-        self.geometry("560x700")
-        self.resizable(False, False)
-        self._build_ui()
-
-    def _build_ui(self):
-        ctk.CTkLabel(self, text="Semester Planner",
-                     font=ctk.CTkFont(size=22, weight="bold")).pack(pady=(22, 2))
-        ctk.CTkLabel(self, text="Configure your planner and click Generate.",
-                     text_color="gray").pack(pady=(0, 16))
-
-        form = ctk.CTkFrame(self)
-        form.pack(padx=28, fill="x")
-
-        def section(text):
-            ctk.CTkLabel(form, text=text,
-                         font=ctk.CTkFont(size=12, weight="bold"),
-                         text_color="#6ea8fe", anchor="w").pack(fill="x", padx=6, pady=(14, 2))
-
-        def label(text):
-            ctk.CTkLabel(form, text=text, anchor="w").pack(fill="x", padx=6, pady=(4, 0))
-
-        # ── Language ──────────────────────────────────────────────────────────
-        section("Language")
-        self.lang_var = ctk.StringVar(value="en")
-        lang_row = ctk.CTkFrame(form, fg_color="transparent")
-        lang_row.pack(fill="x", padx=6, pady=4)
-        for code, display in [("en", "English"), ("is", "Íslenska"),
-                               ("es", "Español"), ("fr", "Français")]:
-            ctk.CTkRadioButton(lang_row, text=display,
-                               variable=self.lang_var, value=code).pack(side="left", padx=8)
-
-        # ── Layout ────────────────────────────────────────────────────────────
-        section("Layout")
-        self.layout_var = ctk.StringVar(value="1")
-        ctk.CTkRadioButton(form, text="Standard  —  date and task on the same row",
-                           variable=self.layout_var, value="1").pack(anchor="w", padx=6, pady=2)
-        ctk.CTkRadioButton(form, text="Grouped  —  date row, tasks below with spacing",
-                           variable=self.layout_var, value="2").pack(anchor="w", padx=6, pady=2)
-
-        # ── Export format ─────────────────────────────────────────────────────
-        section("Export Format")
-        self.format_var = ctk.StringVar(value="csv")
-        fmt_row = ctk.CTkFrame(form, fg_color="transparent")
-        fmt_row.pack(fill="x", padx=6, pady=4)
-        ctk.CTkRadioButton(fmt_row, text=".csv  (Excel / Google Sheets)",
-                           variable=self.format_var, value="csv").pack(side="left", padx=8)
-        ctk.CTkRadioButton(fmt_row, text=".txt  (Notes app)",
-                           variable=self.format_var, value="txt").pack(side="left", padx=8)
-
-        # ── Date range ────────────────────────────────────────────────────────
-        section("Date Range")
-        date_row = ctk.CTkFrame(form, fg_color="transparent")
-        date_row.pack(fill="x", padx=6, pady=4)
-
-        ctk.CTkLabel(date_row, text="Start (YYYY-MM-DD)").pack(side="left")
-        self.start_entry = ctk.CTkEntry(date_row, width=130, placeholder_text="2025-01-15")
-        self.start_entry.pack(side="left", padx=(6, 20))
-
-        ctk.CTkLabel(date_row, text="End (YYYY-MM-DD)").pack(side="left")
-        self.end_entry = ctk.CTkEntry(date_row, width=130, placeholder_text="2025-05-15")
-        self.end_entry.pack(side="left", padx=6)
-
-        # ── Calendar URLs ─────────────────────────────────────────────────────
-        section("Calendar URLs  (up to 5)")
-        ctk.CTkLabel(form, text="Paste your .ics feed URL(s) below. Leave unused rows blank.",
-                     text_color="gray", anchor="w", wraplength=480).pack(fill="x", padx=6)
-
-        self.url_entries = []
-        for i in range(5):
-            e = ctk.CTkEntry(form, placeholder_text=f"URL {i+1}")
-            e.pack(fill="x", padx=6, pady=3)
-            self.url_entries.append(e)
-
-        # ── Status / progress ─────────────────────────────────────────────────
-        self.status_label = ctk.CTkLabel(self, text="", text_color="gray")
-        self.status_label.pack(pady=(14, 0))
-
-        # ── Generate button ───────────────────────────────────────────────────
-        self.generate_btn = ctk.CTkButton(
-            self, text="Fetch Calendar & Continue →",
-            height=42, font=ctk.CTkFont(size=14, weight="bold"),
-            command=self._on_generate)
-        self.generate_btn.pack(pady=14)
-
-    # ── validation & fetch ────────────────────────────────────────────────────
-
-    def _set_status(self, text, color="gray"):
-        self.status_label.configure(text=text, text_color=color)
-        self.update_idletasks()
-
-    def _on_generate(self):
-        """Validate inputs, then fetch calendars in a background thread."""
-
-        # Validate dates
-        try:
-            sy, sm, sd = map(int, self.start_entry.get().strip().split("-"))
-            start_date = date(sy, sm, sd)
-        except:
-            messagebox.showerror("Invalid date", "Start date must be YYYY-MM-DD.")
-            return
-        try:
-            ey, em, ed = map(int, self.end_entry.get().strip().split("-"))
-            end_date = date(ey, em, ed)
-        except:
-            messagebox.showerror("Invalid date", "End date must be YYYY-MM-DD.")
-            return
-        if end_date < start_date:
-            messagebox.showerror("Invalid range", "End date cannot be before start date.")
-            return
-
-        # Collect URLs
-        urls = [e.get().strip() for e in self.url_entries if e.get().strip()]
-        if not urls:
-            messagebox.showerror("No URLs", "Please enter at least one calendar URL.")
-            return
-
-        # Store validated preferences
-        self._prefs = {
-            "lang":   self.lang_var.get(),
-            "layout": self.layout_var.get(),
-            "format": self.format_var.get(),
-            "start":  start_date,
-            "end":    end_date,
-            "urls":   urls,
-        }
-
-        self.generate_btn.configure(state="disabled")
-        self._set_status("Fetching calendar data…")
-
-        # Fetch in a thread so the window doesn't freeze
-        threading.Thread(target=self._fetch_thread, daemon=True).start()
-
-    def _fetch_thread(self):
-        """Runs in background — fetches and merges all ICS feeds."""
-        urls = self._prefs["urls"]
+if st.button("📥  Fetch Calendar Data", type="primary", use_container_width=True):
+    if not url_entries:
+        st.error("Please enter at least one calendar URL.")
+    else:
         assignments = {}
         errors = []
+        progress = st.progress(0, text="Starting…")
 
-        for i, url in enumerate(urls, 1):
-            self.after(0, self._set_status, f"Fetching source {i} of {len(urls)}…")
+        for i, url in enumerate(url_entries):
+            progress.progress((i) / len(url_entries), text=f"Fetching source {i+1} of {len(url_entries)}…")
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             try:
                 with urllib.request.urlopen(req) as resp:
@@ -368,56 +198,100 @@ class PlannerApp(ctk.CTk):
                         if task not in assignments[day]:
                             assignments[day].append(task)
             except Exception as e:
-                errors.append(f"URL {i}: {e}")
+                errors.append(f"URL {i+1}: {e}")
 
-        # Hand results back to the main thread
-        self.after(0, self._fetch_done, assignments, errors)
+        progress.progress(1.0, text="Done!")
 
-    def _fetch_done(self, assignments, errors):
-        """Called on main thread after fetch completes."""
-        self.generate_btn.configure(state="normal")
+        st.session_state.assignments = assignments
+        st.session_state.fetch_errors = errors
 
         if errors:
-            messagebox.showwarning("Some URLs failed",
-                                   "Could not fetch:\n" + "\n".join(errors))
+            for err in errors:
+                st.warning(f"Could not fetch — {err}")
 
-        if not assignments:
-            self._set_status("No assignments found. Check your URLs.", color="#ff6b6b")
-            return
+        if assignments:
+            total = sum(len(v) for v in assignments.values())
+            st.success(f"✓ Fetched {total} assignment(s) across {len(assignments)} day(s).")
+        else:
+            st.error("No assignments found. Check your URLs.")
 
-        count = sum(len(v) for v in assignments.values())
-        self._set_status(f"✓ Fetched {count} assignment(s). Opening weights window…", color="#6bcb77")
+# ── Section 4: Weights (shown only after a successful fetch) ──────────────────
+if st.session_state.assignments:
+    assignments = st.session_state.assignments
 
-        self._assignments = assignments
-        # Open the weights window; pass _generate as the callback
-        WeightWindow(self, assignments, on_done=self._generate)
+    # Build flat unique assignment list and course names
+    all_assignments = []
+    for task_list in assignments.values():
+        for task in task_list:
+            if task not in all_assignments:
+                all_assignments.append(task)
 
-    # ── file generation ───────────────────────────────────────────────────────
+    found_courses = sorted(set(
+        a.split(":")[0].strip() for a in all_assignments if ":" in a
+    ))
 
-    def _generate(self, weight_map):
-        """Called after the weight window closes — writes the output file."""
-        p = self._prefs
-        filename = f"planner_{p['lang']}.{p['format']}"
+    st.subheader("4 · Assignment Weights  *(optional)*")
 
-        try:
-            write_planner(
-                filename=filename,
-                format_choice=p["format"],
-                layout_choice=p["layout"],
-                lang_choice=p["lang"],
-                start_date=p["start"],
-                end_date=p["end"],
-                assignments=self._assignments,
-                weight_map=weight_map,
-            )
-            self._set_status(f"✓ Saved as {filename}", color="#6bcb77")
-            messagebox.showinfo("Done!", f"Planner saved as:\n{filename}")
-        except Exception as e:
-            self._set_status("Error writing file.", color="#ff6b6b")
-            messagebox.showerror("Error", str(e))
+    add_weights = st.toggle("Add weights to assignments")
+    weight_map = {}
 
-# ── entry point ───────────────────────────────────────────────────────────────
+    if add_weights:
+        if not found_courses:
+            st.info("No course-tagged assignments found in your calendar.")
+        else:
+            st.caption("Enter a weight (e.g. 20% or 0.2) next to each assignment. Leave blank to skip.")
 
-if __name__ == "__main__":
-    app = PlannerApp()
-    app.mainloop()
+            for course in found_courses:
+                with st.expander(f"📚 {course}", expanded=True):
+                    course_assignments = [
+                        a for a in all_assignments
+                        if a.lower().startswith(course.lower() + ":")
+                    ]
+                    for assignment in course_assignments:
+                        display = assignment.split(":", 1)[1].strip() if ":" in assignment else assignment
+                        col_a, col_w = st.columns([3, 1])
+                        with col_a:
+                            st.markdown(f"<small>{display}</small>", unsafe_allow_html=True)
+                        with col_w:
+                            val = st.text_input(
+                                "Weight",
+                                key=f"w_{assignment}",
+                                placeholder="e.g. 20%",
+                                label_visibility="collapsed",
+                            )
+                        if val.strip():
+                            try:
+                                float(val.strip().replace("%", ""))
+                                weight_map[assignment] = val.strip()
+                            except ValueError:
+                                st.error(f'"{val}" is not a valid weight for: {display}')
+
+    # ── Generate & Download ───────────────────────────────────────────────────
+    st.divider()
+    st.subheader("5 · Generate & Download")
+
+    filename = f"planner_{lang_choice}.{format_choice}"
+    mime = "text/csv" if format_choice == "csv" else "text/plain"
+
+    try:
+        file_bytes = build_planner_bytes(
+            format_choice=format_choice,
+            layout_choice=layout_choice,
+            lang_choice=lang_choice,
+            start_date=start_date,
+            end_date=end_date,
+            assignments=assignments,
+            weight_map=weight_map,
+        )
+
+        st.download_button(
+            label=f"⬇️  Download {filename}",
+            data=file_bytes,
+            file_name=filename,
+            mime=mime,
+            type="primary",
+            use_container_width=True,
+        )
+
+    except Exception as e:
+        st.error(f"Error generating file: {e}")
